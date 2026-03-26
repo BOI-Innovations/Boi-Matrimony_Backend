@@ -25,6 +25,7 @@ public class AdminController {
 	public ResponseEntity getAllProfiles(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size) {
 				System.out.println("Hello Java");
+				System.out.println("Hello Java");
 		return adminService.getAllProfiles(page, size);
 	}
 
