@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.matrimony.model.dto.request.LoginRequest;
 import com.matrimony.model.dto.request.SignupRequest;
 import com.matrimony.model.dto.response.JwtResponse;
-import com.matrimony.model.dto.response.ProfileResponse;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
 import com.matrimony.repository.ProfileRepository;
@@ -43,7 +42,7 @@ public class AuthController {
 
 	@Autowired
 	private UserService userService;
-	
+
 	@Autowired
 	private ProfileRepository profileRepository;
 
@@ -66,19 +65,17 @@ public class AuthController {
 			User user = userService.getUserByUsername(userPrincipal.getUsername());
 			user.setLastLoginAt(LocalDateTime.now());
 			userService.save(user);
-			
+
 			String fullName = profileRepository.findFullNameByUserId(user.getId());
 			JwtResponse jwtResponse = new JwtResponse(
-	                accessToken,
-	                user.getId(),
-	                user.getUsername(),
-	                user.getEmail(),
-	                fullName,
-	                user.getPhoneNumber(),   // ✅ Added
-	                roles,
-	                refreshToken
-	        );
-
+					accessToken,
+					user.getId(),
+					user.getUsername(),
+					user.getEmail(),
+					fullName,
+					user.getPhoneNumber(),
+					roles,
+					refreshToken);
 
 			return new ResponseEntity("Login successful", HttpStatus.OK.value(), jwtResponse);
 
@@ -92,7 +89,6 @@ public class AuthController {
 	public ResponseEntity registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 		return userService.createUser(signUpRequest);
 	}
-
 
 	@PostMapping("/refresh-token")
 	public ResponseEntity refreshToken(
@@ -117,22 +113,19 @@ public class AuthController {
 
 		String newAccessToken = jwtUtils.generateAccessToken(userPrincipal);
 		String newRefreshToken = jwtUtils.generateRefreshToken(userPrincipal);
-
 		Set<String> roles = userPrincipal.getAuthorities().stream().map(auth -> auth.getAuthority())
 				.collect(Collectors.toSet());
 
 		String fullName = profileRepository.findFullNameByUserId(user.getId());
-		JwtResponse jwtResponse = new JwtResponse(
-				newAccessToken,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                fullName,
-                user.getPhoneNumber(),   
-                roles,
-                newRefreshToken
-        );
-		
+		JwtResponse jwtResponse = new JwtResponse(newAccessToken,
+				user.getId(),
+				user.getUsername(),
+				user.getEmail(),
+				fullName,
+				user.getPhoneNumber(),
+				roles,
+				newRefreshToken);
+
 		return new ResponseEntity("Token refreshed successfully", HttpStatus.OK.value(), jwtResponse);
 	}
 

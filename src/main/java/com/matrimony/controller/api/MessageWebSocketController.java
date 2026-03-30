@@ -33,12 +33,7 @@ public class MessageWebSocketController {
 		try {
 			MessageResponse savedMessage = messageService.sendMessage(messageRequest);
 			messagingTemplate.convertAndSend("/topic/user/" + savedMessage.getReceiverId(), savedMessage);
-
-			System.out.println("✅ Message sent from User " + savedMessage.getSenderId() + " to User "
-					+ savedMessage.getReceiverId() + " via /topic/user/" + savedMessage.getReceiverId());
-
 		} catch (Exception e) {
-			System.err.println("❌ Error sending message: " + e.getMessage());
 			e.printStackTrace();
 			throw new RuntimeException("Failed to send message: " + e.getMessage());
 		}
@@ -51,13 +46,11 @@ public class MessageWebSocketController {
 			if (!StringUtils.hasText(token) || !token.startsWith("Bearer ")) {
 				return;
 			}
-
 			String jwt = token.substring(7);
 			if (!jwtUtils.validateJwtToken(jwt)) {
 				return;
 			}
 			messagingTemplate.convertAndSend("/topic/typing/" + messageRequest.getReceiverId(), messageRequest);
-
 		} catch (Exception e) {
 			System.err.println("❌ Error handling typing indicator: " + e.getMessage());
 		}
