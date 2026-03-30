@@ -24,9 +24,6 @@ public class AdminController {
 	@GetMapping("/profiles")
 	public ResponseEntity getAllProfiles(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "20") int size) {
-		System.out.println("hello world");
-		System.out.println("Github Testing");
-		
 		return adminService.getAllProfiles(page, size);
 	}
 
