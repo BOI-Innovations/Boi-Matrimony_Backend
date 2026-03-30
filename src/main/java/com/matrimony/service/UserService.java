@@ -72,4 +72,8 @@ public interface UserService {
 	Optional<User> findById(Long id);
 
 	ResponseEntity deleteUser(Long userId);
+
+	ResponseEntity updateCredentials(String oldUsername, String newUsername, String newEmail, String newPhoneNumber);
+
+	ResponseEntity getUsers(String search, int page, int limit);
 }

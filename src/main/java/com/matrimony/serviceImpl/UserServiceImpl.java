@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,12 +28,14 @@ import org.springframework.util.FileCopyUtils;
 
 import com.matrimony.model.dto.request.SignupRequest;
 import com.matrimony.model.dto.response.UserResponse;
+import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
 import com.matrimony.model.enums.RoleName;
 import com.matrimony.repository.UserRepository;
 import com.matrimony.service.EmailService;
 import com.matrimony.service.UserService;
+import com.matrimony.util.EmailValidator;
 import com.matrimony.util.TokenGenerator;
 
 @Service
@@ -47,6 +52,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private TokenGenerator tokenGenerator;
+
+	@Autowired
+	private EmailValidator emailValidator;
 
 	@Autowired
 	private EmailService emailService;
@@ -362,7 +370,6 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public ResponseEntity resetPassword(String token, String newPassword) {
-		System.out.println("New Password Is" + newPassword);
 		try {
 			Optional<User> userOptional = userRepository.findByVerificationToken(token);
 			if (!userOptional.isPresent()) {
@@ -370,7 +377,6 @@ public class UserServiceImpl implements UserService {
 			}
 
 			User user = userOptional.get();
-			System.out.println("New Password Is" + newPassword);
 			user.setPassword(passwordEncoder.encode(newPassword));
 			user.setVerificationToken(tokenGenerator.generateVerificationToken());
 			userRepository.save(user);
@@ -429,13 +435,81 @@ public class UserServiceImpl implements UserService {
 				user.setUsername(newUsername.trim());
 			}
 
-			if (newEmail != null && !newEmail.trim().isEmpty() && !newEmail.equalsIgnoreCase(user.getEmail())) {
-
-				if (userRepository.existsByEmail(newEmail.trim())) {
-					return new ResponseEntity("Email already in use", 400, null);
+			if (newEmail != null) {
+				newEmail = newEmail.trim();
+				if (!newEmail.isEmpty()) {
+					if (!emailValidator.isValidEmail(newEmail)) {
+						return new ResponseEntity("Invalid email format", 400, null);
+					}
+					if (!newEmail.equalsIgnoreCase(user.getEmail())) {
+						if (userRepository.existsByEmail(newEmail)) {
+							return new ResponseEntity("Email already in use", 400, null);
+						}
+						user.setEmail(newEmail);
+					}
 				}
+			}
 
-				user.setEmail(newEmail.trim());
+			userRepository.save(user);
+
+			return new ResponseEntity("User credentials updated successfully", 200, null);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Error updating credentials: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity updateCredentials(String oldUsername, String newUsername, String newEmail,
+			String newPhoneNumber) {
+		try {
+			Optional<User> userOptional = userRepository.findByUsernameWithProfile(oldUsername);
+
+			if (!userOptional.isPresent()) {
+				return new ResponseEntity("User not found with username: " + oldUsername, 404, null);
+			}
+
+			User user = userOptional.get();
+
+			if (newUsername != null) {
+				newUsername = newUsername.trim();
+
+				if (!newUsername.isEmpty() && !newUsername.equalsIgnoreCase(user.getUsername())) {
+
+					if (userRepository.existsByUsername(newUsername)) {
+						return new ResponseEntity("Username already taken", 400, null);
+					}
+
+					user.setUsername(newUsername);
+				}
+			}
+
+			if (newEmail != null) {
+				newEmail = newEmail.trim();
+
+				if (!newEmail.isEmpty()) {
+
+					if (!emailValidator.isValidEmail(newEmail)) {
+						return new ResponseEntity("Invalid email format", 400, null);
+					}
+
+					if (!newEmail.equalsIgnoreCase(user.getEmail())) {
+
+						if (userRepository.existsByEmail(newEmail)) {
+							return new ResponseEntity("Email already in use", 400, null);
+						}
+
+						user.setEmail(newEmail);
+					}
+				}
+			}
+
+			if (newPhoneNumber != null) {
+				newPhoneNumber = newPhoneNumber.trim();
+
+				if (!newPhoneNumber.isEmpty() && !newPhoneNumber.equals(user.getPhoneNumber())) {
+					user.setPhoneNumber(newPhoneNumber);
+				}
 			}
 
 			userRepository.save(user);
@@ -611,4 +685,54 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findById(id);
 	}
 
+	@Override
+	public ResponseEntity getUsers(String search, int page, int limit) {
+		try {
+			var usersPage = userRepository.searchUsers(search, PageRequest.of(page - 1, limit));
+
+			if (usersPage.isEmpty()) {
+				return new ResponseEntity("No users found", 404, null);
+			}
+
+			List<Map<String, Object>> users = usersPage.stream().map(user -> {
+				Map<String, Object> userMap = new HashMap<>();
+				Profile profile = user.getProfile();
+
+				String fullName = user.getUsername();
+				Integer age = null;
+				String location = null;
+
+				if (profile != null) {
+					fullName = profile.getFirstName() + " " + profile.getLastName();
+					location = profile.getPlaceOfBirth();
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+				}
+
+				userMap.put("id", user.getId());
+				userMap.put("name", fullName);
+				userMap.put("gender", profile != null ? profile.getGender().name() : null);
+				userMap.put("age", age);
+				userMap.put("location", location);
+				userMap.put("email", user.getEmail());
+				userMap.put("phone", user.getPhoneNumber());
+				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
+				userMap.put("date", user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now());
+
+				return userMap;
+			}).collect(Collectors.toList());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("users", users);
+			payload.put("currentPage", usersPage.getNumber() + 1);
+			payload.put("totalPages", usersPage.getTotalPages());
+			payload.put("totalUsers", usersPage.getTotalElements());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
 }

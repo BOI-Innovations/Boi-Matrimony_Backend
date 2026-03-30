@@ -24,17 +24,17 @@ import com.matrimony.serviceImpl.ProfileServiceImpl;
 @CrossOrigin(allowedHeaders = "*")
 public class UserController {
 
-    private final SearchController searchController;
-	
+	private final SearchController searchController;
+
 	@Autowired
 	ProfileServiceImpl profileServiceImpl;
 
 	@Autowired
 	private UserService userService;
 
-    UserController(SearchController searchController) {
-        this.searchController = searchController;
-    }
+	UserController(SearchController searchController) {
+		this.searchController = searchController;
+	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity getUserById(@PathVariable Long id) {
@@ -138,13 +138,21 @@ public class UserController {
 			@RequestParam(required = false) String newUsername, @RequestParam(required = false) String newEmail) {
 		return userService.updateCredentials(oldUsername.trim(), newUsername, newEmail);
 	}
-	
+
+	@PostMapping("/update-admin-credentials")
+	public ResponseEntity updateCredentials(@RequestParam String oldUsername,
+			@RequestParam(required = false) String newUsername, @RequestParam(required = false) String newEmail,
+			@RequestParam(required = false) String newPhoneNumber) {
+
+		return userService.updateCredentials(oldUsername.trim(), newUsername, newEmail, newPhoneNumber);
+	}
+
 	@PostMapping("/deactivateUser")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity deactivateUser(@RequestParam Long userId) {
 		return userService.deactivateUser(userId);
 	}
-	
+
 	@PostMapping("/activateUser")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity activateUser(@RequestParam Long userId) {
@@ -155,10 +163,16 @@ public class UserController {
 	public ResponseEntity deleteUser(@RequestParam Long userId) {
 		return userService.deleteUser(userId);
 	}
-	
+
 	@DeleteMapping("/deleteAccount")
 	public ResponseEntity deleteAccount() {
 		Long userId = profileServiceImpl.getCurrentUserId();
 		return userService.deleteUser(userId);
+	}
+
+	@GetMapping
+	public ResponseEntity getUsers(@RequestParam(required = false, defaultValue = "") String search,
+			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int limit) {
+		return userService.getUsers(search, page, limit);
 	}
 }
