@@ -21,17 +21,22 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.FileCopyUtils;
 
+import com.matrimony.model.dto.request.HelpRequestRequest;
 import com.matrimony.model.dto.request.SignupRequest;
+import com.matrimony.model.dto.response.HelpRequestResponse;
 import com.matrimony.model.dto.response.UserResponse;
+import com.matrimony.model.entity.HelpRequest;
 import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
 import com.matrimony.model.enums.RoleName;
+import com.matrimony.repository.HelpRequestRepository;
 import com.matrimony.repository.UserRepository;
 import com.matrimony.service.EmailService;
 import com.matrimony.service.UserService;
@@ -58,6 +63,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private EmailService emailService;
+
+	@Autowired
+	private HelpRequestRepository helpRequestRepository;
 
 	private final Random random = new Random();
 
@@ -735,4 +743,50 @@ public class UserServiceImpl implements UserService {
 			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
 		}
 	}
+
+	@Override
+	public ResponseEntity createHelpRequest(HelpRequestRequest request) {
+		try {
+			User user = null;
+
+			try {
+				String username = SecurityContextHolder.getContext().getAuthentication().getName();
+				if (username != null && !"anonymousUser".equals(username)) {
+					user = getUserByUsername(username);
+				}
+
+			} catch (Exception e) {
+				// ignore → user remains null
+			}
+
+			HelpRequest helpRequest = new HelpRequest();
+			helpRequest.setUser(user); // nullable
+			helpRequest.setName(request.getName());
+			helpRequest.setEmail(request.getEmail());
+			helpRequest.setSubject(request.getSubject());
+			helpRequest.setMessage(request.getMessage());
+			helpRequest.setStatus("OPEN");
+
+			HelpRequest saved = helpRequestRepository.save(helpRequest);
+			HelpRequestResponse responseDto = mapToResponse(saved);
+
+			return new ResponseEntity("Help request submitted successfully", 200, responseDto);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Error saving help request: " + e.getMessage(), 500, null);
+		}
+	}
+
+	private HelpRequestResponse mapToResponse(HelpRequest helpRequest) {
+		HelpRequestResponse response = new HelpRequestResponse();
+		response.setId(helpRequest.getId().intValue());
+		response.setName(helpRequest.getName());
+		response.setEmail(helpRequest.getEmail());
+		response.setSubject(helpRequest.getSubject());
+		response.setMessage(helpRequest.getMessage());
+		response.setStatus(helpRequest.getStatus());
+		response.setCreatedAt(helpRequest.getCreatedAt());
+		return response;
+	}
+
 }

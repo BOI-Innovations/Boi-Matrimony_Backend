@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.matrimony.model.dto.request.HelpRequestRequest;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.enums.RoleName;
 import com.matrimony.service.UserService;
@@ -39,6 +41,11 @@ public class UserController {
 	@GetMapping("/{id}")
 	public ResponseEntity getUserById(@PathVariable Long id) {
 		return userService.getUserById(id);
+	}
+	
+	@PostMapping("/raiseTicket")
+	public ResponseEntity createHelpRequest(@RequestBody HelpRequestRequest request) {
+		return userService.createHelpRequest(request);
 	}
 
 	@PostMapping("/verify-email")

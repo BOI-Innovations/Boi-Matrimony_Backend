@@ -2,7 +2,6 @@ package com.matrimony.model.entity;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -25,7 +24,7 @@ public class HelpRequest {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
+	@JoinColumn(name = "user_id", nullable = true)
 	@JsonIgnore
 	private User user;
 
@@ -33,7 +32,7 @@ public class HelpRequest {
 	private String email;
 	private String subject;
 	private LocalDateTime createdAt;
-	
+
 	@Column(columnDefinition = "TEXT")
 	private String message;
 
@@ -119,5 +118,5 @@ public class HelpRequest {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
-	
+
 }

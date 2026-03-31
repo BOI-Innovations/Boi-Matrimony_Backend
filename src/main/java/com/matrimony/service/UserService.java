@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 
+import com.matrimony.model.dto.request.HelpRequestRequest;
 import com.matrimony.model.dto.request.SignupRequest;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
@@ -76,4 +77,6 @@ public interface UserService {
 	ResponseEntity updateCredentials(String oldUsername, String newUsername, String newEmail, String newPhoneNumber);
 
 	ResponseEntity getUsers(String search, int page, int limit);
+
+	ResponseEntity createHelpRequest(HelpRequestRequest request);
 }
