@@ -4,5 +4,6 @@ public enum ProfileVerificationStatus {
     PENDING,
     VERIFIED,
     REJECTED,
-    UNDER_REVIEW
+    UNDER_REVIEW,
+    SUSPENDED   
 }

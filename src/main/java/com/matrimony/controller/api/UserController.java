@@ -1,6 +1,7 @@
 package com.matrimony.controller.api;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -42,7 +43,7 @@ public class UserController {
 	public ResponseEntity getUserById(@PathVariable Long id) {
 		return userService.getUserById(id);
 	}
-	
+
 	@PostMapping("/raiseTicket")
 	public ResponseEntity createHelpRequest(@RequestBody HelpRequestRequest request) {
 		return userService.createHelpRequest(request);
@@ -166,6 +167,18 @@ public class UserController {
 		return userService.activateUser(userId);
 	}
 
+	@PostMapping("/bulkDeactivateUsers")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity bulkDeactivateUsers(@RequestBody List<Long> userIds) {
+	    return userService.bulkDeactivateUsers(userIds);
+	}
+
+	@PostMapping("/bulkActivateUsers")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity bulkActivateUsers(@RequestBody List<Long> userIds) {
+	    return userService.bulkActivateUsers(userIds);
+	}
+	
 	@DeleteMapping("/deleteUser")
 	public ResponseEntity deleteUser(@RequestParam Long userId) {
 		return userService.deleteUser(userId);
@@ -177,9 +190,4 @@ public class UserController {
 		return userService.deleteUser(userId);
 	}
 
-	@GetMapping
-	public ResponseEntity getUsers(@RequestParam(required = false, defaultValue = "") String search,
-			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int limit) {
-		return userService.getUsers(search, page, limit);
-	}
 }

@@ -9,4 +9,6 @@ import com.matrimony.model.entity.User;
 
 public interface HelpRequestRepository extends JpaRepository<HelpRequest, Long> {
 	List<HelpRequest> findByUser(User user);
+
+	Long countByStatus(String status);
 }

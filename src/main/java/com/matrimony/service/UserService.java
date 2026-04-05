@@ -1,6 +1,7 @@
 package com.matrimony.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
@@ -76,7 +77,11 @@ public interface UserService {
 
 	ResponseEntity updateCredentials(String oldUsername, String newUsername, String newEmail, String newPhoneNumber);
 
-	ResponseEntity getUsers(String search, int page, int limit);
-
 	ResponseEntity createHelpRequest(HelpRequestRequest request);
+
+	ResponseEntity adminSignup(SignupRequest signUpRequest);
+
+	ResponseEntity bulkDeactivateUsers(List<Long> userIds);
+
+	ResponseEntity bulkActivateUsers(List<Long> userIds);
 }

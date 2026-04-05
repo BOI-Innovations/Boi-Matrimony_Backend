@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -90,6 +91,13 @@ public class AuthController {
 		return userService.createUser(signUpRequest);
 	}
 
+	
+	@PostMapping("/adminSignup")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity adminSignup(@Valid @RequestBody SignupRequest signUpRequest) {
+		return userService.adminSignup(signUpRequest);
+	}
+	
 	@PostMapping("/refresh-token")
 	public ResponseEntity refreshToken(
 			@RequestHeader("Authorization") String authorizationHeader) {

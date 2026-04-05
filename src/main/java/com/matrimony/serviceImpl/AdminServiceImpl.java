@@ -1,23 +1,32 @@
 package com.matrimony.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.matrimony.model.dto.request.UpdateUserRequest;
 import com.matrimony.model.dto.response.ProfileResponse;
+import com.matrimony.model.dto.response.UserResponse;
 import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
 import com.matrimony.model.enums.ProfileVerificationStatus;
+import com.matrimony.model.enums.RoleName;
 import com.matrimony.repository.ProfileRepository;
 import com.matrimony.repository.UserRepository;
 import com.matrimony.service.AdminService;
@@ -142,17 +151,19 @@ public class AdminServiceImpl implements AdminService {
 	@Override
 	public ResponseEntity deleteUser(Long userId) {
 		try {
-			ResponseEntity response = userService.getUserById(userId);
-			User user = (User) response.getPayload();
 
+			if (userId == null) {
+				return new ResponseEntity("User id cannot be null", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			User user = userRepository.findById(userId).orElse(null);
 			if (user == null) {
 				return new ResponseEntity("User not found with id: " + userId, 404, null);
 			}
 
-			userRepository.delete(user);
-
+			userRepository.deleteById(userId);
 			return new ResponseEntity("User deleted successfully.", 200, null);
 		} catch (Exception e) {
+
 			return new ResponseEntity("Error deleting user: " + e.getMessage(), 500, null);
 		}
 	}
@@ -165,6 +176,43 @@ public class AdminServiceImpl implements AdminService {
 	@Override
 	public ResponseEntity activateUser(Long userId) {
 		return userService.activateUser(userId);
+	}
+
+	@Override
+	public ResponseEntity getAllAdmins() {
+		try {
+			List<User> admins = userRepository.findByRolesContaining(RoleName.ROLE_ADMIN);
+			if (admins.isEmpty()) {
+				return new ResponseEntity("No admin users found.", HttpStatus.NOT_FOUND.value(), null);
+			}
+			List<UserResponse> adminList = admins.stream().map(this::convertToUserResponse)
+					.collect(Collectors.toList());
+
+			return new ResponseEntity("Admin users fetched successfully.", HttpStatus.OK.value(), adminList);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Error fetching admin users: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	private UserResponse convertToUserResponse(User user) {
+
+		UserResponse response = new UserResponse();
+
+		response.setId(user.getId());
+		response.setUsername(user.getUsername());
+		response.setEmail(user.getEmail());
+		response.setPhoneNumber(user.getPhoneNumber());
+		response.setIsActive(user.getIsActive());
+		response.setCreatedAt(user.getCreatedAt());
+		response.setLastLoginAt(user.getLastLoginAt());
+
+		Set<String> roles = user.getRoles().stream().map(Enum::name).collect(Collectors.toSet());
+
+		response.setRoles(roles);
+
+		return response;
 	}
 
 	private ProfileResponse convertToProfileResponse(Profile profile) {
@@ -206,6 +254,282 @@ public class AdminServiceImpl implements AdminService {
 		response.setUpdatedAt(profile.getUpdatedAt());
 
 		return response;
+	}
+
+	@Override
+	public ResponseEntity getUsers(String search, int page, int limit) {
+		try {
+			var usersPage = userRepository.searchUsers(search, PageRequest.of(page - 1, limit));
+
+			if (usersPage.isEmpty()) {
+				return new ResponseEntity("No users found", 404, null);
+			}
+
+			List<Map<String, Object>> users = usersPage.stream().map(user -> {
+				Map<String, Object> userMap = new HashMap<>();
+				Profile profile = user.getProfile();
+
+				String fullName = user.getUsername();
+				Integer age = null;
+				String location = null;
+
+				if (profile != null) {
+					fullName = profile.getFirstName() + " " + profile.getLastName();
+					location = profile.getPlaceOfBirth();
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+				}
+
+				userMap.put("id", user.getId());
+				userMap.put("name", fullName);
+				userMap.put("gender", profile != null ? profile.getGender().name() : null);
+				userMap.put("age", age);
+				userMap.put("location", location);
+				userMap.put("email", user.getEmail());
+				userMap.put("phone", user.getPhoneNumber());
+				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
+				userMap.put("date", user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now());
+
+				return userMap;
+			}).collect(Collectors.toList());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("users", users);
+			payload.put("currentPage", usersPage.getNumber() + 1);
+			payload.put("totalPages", usersPage.getTotalPages());
+			payload.put("totalUsers", usersPage.getTotalElements());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity getSuspendedUsers(String search, int page, int limit) {
+		try {
+			var usersPage = userRepository.searchInactiveUsers(search, PageRequest.of(page - 1, limit));
+
+			if (usersPage.isEmpty()) {
+				return new ResponseEntity("No users found", 404, null);
+			}
+
+			List<Map<String, Object>> users = usersPage.stream().map(user -> {
+				Map<String, Object> userMap = new HashMap<>();
+				Profile profile = user.getProfile();
+
+				String fullName = user.getUsername();
+				Integer age = null;
+				String location = null;
+
+				if (profile != null) {
+					fullName = profile.getFirstName() + " " + profile.getLastName();
+					location = profile.getPlaceOfBirth();
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+				}
+
+				userMap.put("id", user.getId());
+				userMap.put("name", fullName);
+				userMap.put("gender", profile != null ? profile.getGender().name() : null);
+				userMap.put("age", age);
+				userMap.put("location", location);
+				userMap.put("email", user.getEmail());
+				userMap.put("phone", user.getPhoneNumber());
+				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
+				userMap.put("date", user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now());
+
+				return userMap;
+			}).collect(Collectors.toList());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("users", users);
+			payload.put("currentPage", usersPage.getNumber() + 1);
+			payload.put("totalPages", usersPage.getTotalPages());
+			payload.put("totalUsers", usersPage.getTotalElements());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity getUsersByDateRange(String startDate, String endDate, int page, int limit) {
+
+		try {
+
+			LocalDateTime start = LocalDate.parse(startDate).atStartOfDay();
+			LocalDateTime end = LocalDate.parse(endDate).atTime(23, 59, 59);
+
+			var usersPage = userRepository.findUsersByDateRange(start, end, PageRequest.of(page - 1, limit));
+
+			if (usersPage.isEmpty()) {
+				return new ResponseEntity("No users found in this date range", 404, null);
+			}
+
+			List<Map<String, Object>> users = usersPage.stream().map(user -> {
+
+				Map<String, Object> userMap = new HashMap<>();
+				Profile profile = user.getProfile();
+
+				String fullName = user.getUsername();
+				Integer age = null;
+				String location = null;
+
+				if (profile != null) {
+					fullName = profile.getFirstName() + " " + profile.getLastName();
+					location = profile.getPlaceOfBirth();
+
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+				}
+
+				userMap.put("id", user.getId());
+				userMap.put("name", fullName);
+				userMap.put("gender", profile != null ? profile.getGender().name() : null);
+				userMap.put("age", age);
+				userMap.put("location", location);
+				userMap.put("email", user.getEmail());
+				userMap.put("phone", user.getPhoneNumber());
+				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
+				userMap.put("date", user.getCreatedAt());
+
+				return userMap;
+
+			}).collect(Collectors.toList());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("users", users);
+			payload.put("currentPage", usersPage.getNumber() + 1);
+			payload.put("totalPages", usersPage.getTotalPages());
+			payload.put("totalUsers", usersPage.getTotalElements());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity getUsersByStatus(String status, int page, int limit) {
+
+		try {
+
+			Boolean isActive;
+
+			if ("active".equalsIgnoreCase(status)) {
+				isActive = true;
+			} else if ("suspended".equalsIgnoreCase(status)) {
+				isActive = false;
+			} else {
+				return new ResponseEntity("Invalid status. Use Active or Suspended", 400, null);
+			}
+
+			var usersPage = userRepository.findByIsActive(isActive, PageRequest.of(page - 1, limit));
+
+			if (usersPage.isEmpty()) {
+				return new ResponseEntity("No users found with this status", 404, null);
+			}
+
+			List<Map<String, Object>> users = usersPage.stream().map(user -> {
+
+				Map<String, Object> userMap = new HashMap<>();
+				Profile profile = user.getProfile();
+
+				String fullName = user.getUsername();
+				Integer age = null;
+				String location = null;
+
+				if (profile != null) {
+					fullName = profile.getFirstName() + " " + profile.getLastName();
+					location = profile.getPlaceOfBirth();
+
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+				}
+
+				userMap.put("id", user.getId());
+				userMap.put("name", fullName);
+				userMap.put("gender", profile != null ? profile.getGender().name() : null);
+				userMap.put("age", age);
+				userMap.put("location", location);
+				userMap.put("email", user.getEmail());
+				userMap.put("phone", user.getPhoneNumber());
+				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
+				userMap.put("date", user.getCreatedAt());
+
+				return userMap;
+
+			}).collect(Collectors.toList());
+
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("users", users);
+			payload.put("currentPage", usersPage.getNumber() + 1);
+			payload.put("totalPages", usersPage.getTotalPages());
+			payload.put("totalUsers", usersPage.getTotalElements());
+
+			return new ResponseEntity("Success", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity updateUser(Long userId, UpdateUserRequest request) {
+		try {
+			if (userId == null) {
+				return new ResponseEntity("User id cannot be null", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			Optional<User> optionalUser = userRepository.findById(userId);
+
+			if (!optionalUser.isPresent()) {
+				return new ResponseEntity("User not found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			User user = optionalUser.get();
+
+			user.setUsername(request.getUsername().trim());
+			user.setEmail(request.getEmail().trim());
+			user.setPhoneNumber(request.getPhoneNumber());
+
+			if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+
+				Set<RoleName> roles = new HashSet<>();
+
+				for (String roleString : request.getRoles()) {
+					try {
+						RoleName role = RoleName.valueOf(roleString.toUpperCase());
+						roles.add(role);
+					} catch (IllegalArgumentException e) {
+						return new ResponseEntity("Invalid role: " + roleString, HttpStatus.BAD_REQUEST.value(), null);
+					}
+				}
+
+				user.setRoles(roles);
+			}
+
+			user.setUpdatedAt(LocalDateTime.now());
+
+			User updatedUser = userRepository.save(user);
+
+			UserResponse response = convertToUserResponse(updatedUser);
+
+			return new ResponseEntity("User updated successfully", HttpStatus.OK.value(), response);
+
+		} catch (Exception e) {
+
+			return new ResponseEntity("Error updating user: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 }

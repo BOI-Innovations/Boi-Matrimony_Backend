@@ -11,7 +11,7 @@ public class UserResponse {
     private Set<String> roles;
     private Boolean isActive;
     private Boolean emailVerified;
-    
+	private String phoneNumber;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     
@@ -82,4 +82,13 @@ public class UserResponse {
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
     }
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+    
 }
