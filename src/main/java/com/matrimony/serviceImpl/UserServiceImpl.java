@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,8 +18,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,12 +32,12 @@ import com.matrimony.model.dto.request.SignupRequest;
 import com.matrimony.model.dto.response.HelpRequestResponse;
 import com.matrimony.model.dto.response.UserResponse;
 import com.matrimony.model.entity.HelpRequest;
-import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
 import com.matrimony.model.enums.RoleName;
 import com.matrimony.repository.HelpRequestRepository;
 import com.matrimony.repository.UserRepository;
+import com.matrimony.security.services.UserPrincipal;
 import com.matrimony.service.EmailService;
 import com.matrimony.service.UserService;
 import com.matrimony.util.EmailValidator;
@@ -46,7 +46,6 @@ import com.matrimony.util.TokenGenerator;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
-
 	private final Map<String, String> otpStore = new HashMap<>();
 
 	@Autowired
@@ -73,7 +72,9 @@ public class UserServiceImpl implements UserService {
 	public ResponseEntity createUser(SignupRequest signUpRequest) {
 		try {
 			if (userRepository.existsByEmail(signUpRequest.getEmail().trim())) {
-				return new ResponseEntity("Email is already in use.", 400, null);
+				return new ResponseEntity("Email is already in use.", HttpStatus.BAD_REQUEST.value(), null);
+			} else if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+				return new ResponseEntity("Username is already in user.", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			User user = new User();
@@ -91,9 +92,14 @@ public class UserServiceImpl implements UserService {
 				for (String roleString : roleStrings) {
 					try {
 						RoleName role = RoleName.valueOf(roleString.toUpperCase());
+						if (role == RoleName.ROLE_ADMIN) {
+							return new ResponseEntity("Admin role cannot be assigned", HttpStatus.BAD_REQUEST.value(),
+									null);
+						}
 						roles.add(role);
 					} catch (IllegalArgumentException e) {
-						return new ResponseEntity("Role " + roleString + " is not valid.", 400, null);
+						return new ResponseEntity("Role " + roleString + " is not valid.",
+								HttpStatus.BAD_REQUEST.value(), null);
 					}
 				}
 			}
@@ -107,10 +113,68 @@ public class UserServiceImpl implements UserService {
 
 			UserResponse response = convertToUserResponse(savedUser);
 
-			return new ResponseEntity("User created successfully.", 201, response);
+			return new ResponseEntity("User created successfully.", HttpStatus.CREATED.value(), response);
 
 		} catch (Exception e) {
-			return new ResponseEntity("Error occurred while creating user: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error occurred while creating user: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
+	}
+
+	@Override
+	public ResponseEntity adminSignup(SignupRequest signUpRequest) {
+
+		try {
+
+			if (userRepository.existsByEmail(signUpRequest.getEmail().trim())) {
+				return new ResponseEntity("Email is already in use.", HttpStatus.BAD_REQUEST.value(), null);
+			} else if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+				return new ResponseEntity("Username is already in user.", HttpStatus.BAD_REQUEST.value(), null);
+			}
+
+			User user = new User();
+			user.setUsername(signUpRequest.getUsername().trim());
+			user.setEmail(signUpRequest.getEmail().trim());
+			user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+			user.setPhoneNumber(signUpRequest.getPhoneNumber());
+
+			Set<String> roleStrings = signUpRequest.getRoles();
+			Set<RoleName> roles = new HashSet<>();
+
+			if (roleStrings == null || roleStrings.isEmpty()) {
+				return new ResponseEntity("Role must be provided.", HttpStatus.BAD_REQUEST.value(), null);
+			}
+			for (String roleString : roleStrings) {
+				try {
+					RoleName role = RoleName.valueOf(roleString.toUpperCase());
+					if (role != RoleName.ROLE_ADMIN) {
+						return new ResponseEntity("Only ADMIN role is allowed in this API.",
+								HttpStatus.UNAUTHORIZED.value(), null);
+					}
+					roles.add(role);
+
+				} catch (IllegalArgumentException e) {
+
+					return new ResponseEntity("Role " + roleString + " is not valid.", HttpStatus.BAD_REQUEST.value(),
+							null);
+				}
+			}
+
+			user.setRoles(roles);
+			user.setCreatedAt(LocalDateTime.now());
+			user.setUpdatedAt(LocalDateTime.now());
+			user.setVerificationToken(tokenGenerator.generateVerificationToken());
+
+			User savedUser = userRepository.save(user);
+
+			UserResponse response = convertToUserResponse(savedUser);
+
+			return new ResponseEntity("Admin created successfully.", HttpStatus.CREATED.value(), response);
+
+		} catch (Exception e) {
+
+			return new ResponseEntity("Error occurred while creating admin: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
 	}
 
@@ -276,9 +340,26 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
+	public Long getCurrentUserId() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+		return userPrincipal.getId();
+	}
+
 	@Override
 	public ResponseEntity deactivateUser(Long userId) {
 		try {
+
+			if (userId == null) {
+				return new ResponseEntity("User ID cannot be null", 400, null);
+			}
+
+			Long currentUserId = getCurrentUserId();
+
+			if (userId.equals(currentUserId)) {
+				return new ResponseEntity("You cannot deactivate your own account", 403, null);
+			}
+
 			return userRepository.findById(userId).map(user -> {
 				user.setIsActive(false);
 				User updatedUser = userRepository.save(user);
@@ -301,6 +382,62 @@ public class UserServiceImpl implements UserService {
 			}).orElseGet(() -> new ResponseEntity("User not found", 404, null));
 		} catch (Exception e) {
 			return new ResponseEntity("Failed to activate user: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity bulkDeactivateUsers(List<Long> userIds) {
+
+		try {
+			if (userIds == null || userIds.isEmpty()) {
+				return new ResponseEntity("User IDs list cannot be empty", 400, null);
+			}
+
+			Long currentUserId = getCurrentUserId();
+			List<User> users = userRepository.findAllById(userIds);
+			if (users.isEmpty()) {
+				return new ResponseEntity("No users found", 404, null);
+			}
+			List<Long> skippedUsers = new ArrayList<>();
+			for (User user : users) {
+				if (user.getId().equals(currentUserId)) {
+					skippedUsers.add(user.getId());
+					continue;
+				}
+				user.setIsActive(false);
+			}
+
+			userRepository.saveAll(users);
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("processedUsers", users.size());
+			payload.put("skippedUsers", skippedUsers);
+			return new ResponseEntity("Users deactivated successfully", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Failed to deactivate users: " + e.getMessage(), 500, null);
+		}
+	}
+
+	@Override
+	public ResponseEntity bulkActivateUsers(List<Long> userIds) {
+		try {
+			if (userIds == null || userIds.isEmpty()) {
+				return new ResponseEntity("User IDs list cannot be empty", 400, null);
+			}
+			List<User> users = userRepository.findAllById(userIds);
+			if (users.isEmpty()) {
+				return new ResponseEntity("No users found", 404, null);
+			}
+			for (User user : users) {
+				user.setIsActive(true);
+			}
+			userRepository.saveAll(users);
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("processedUsers", users.size());
+			return new ResponseEntity("Users activated successfully", 200, payload);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Failed to activate users: " + e.getMessage(), 500, null);
 		}
 	}
 
@@ -691,57 +828,6 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Optional<User> findById(Long id) {
 		return userRepository.findById(id);
-	}
-
-	@Override
-	public ResponseEntity getUsers(String search, int page, int limit) {
-		try {
-			var usersPage = userRepository.searchUsers(search, PageRequest.of(page - 1, limit));
-
-			if (usersPage.isEmpty()) {
-				return new ResponseEntity("No users found", 404, null);
-			}
-
-			List<Map<String, Object>> users = usersPage.stream().map(user -> {
-				Map<String, Object> userMap = new HashMap<>();
-				Profile profile = user.getProfile();
-
-				String fullName = user.getUsername();
-				Integer age = null;
-				String location = null;
-
-				if (profile != null) {
-					fullName = profile.getFirstName() + " " + profile.getLastName();
-					location = profile.getPlaceOfBirth();
-					if (profile.getDateOfBirth() != null) {
-						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
-					}
-				}
-
-				userMap.put("id", user.getId());
-				userMap.put("name", fullName);
-				userMap.put("gender", profile != null ? profile.getGender().name() : null);
-				userMap.put("age", age);
-				userMap.put("location", location);
-				userMap.put("email", user.getEmail());
-				userMap.put("phone", user.getPhoneNumber());
-				userMap.put("status", user.getIsActive() ? "Active" : "Suspended");
-				userMap.put("date", user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now());
-
-				return userMap;
-			}).collect(Collectors.toList());
-
-			Map<String, Object> payload = new HashMap<>();
-			payload.put("users", users);
-			payload.put("currentPage", usersPage.getNumber() + 1);
-			payload.put("totalPages", usersPage.getTotalPages());
-			payload.put("totalUsers", usersPage.getTotalElements());
-
-			return new ResponseEntity("Success", 200, payload);
-
-		} catch (Exception e) {
-			return new ResponseEntity("Internal server error: " + e.getMessage(), 500, null);
-		}
 	}
 
 	@Override

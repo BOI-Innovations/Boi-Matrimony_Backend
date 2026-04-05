@@ -57,53 +57,65 @@
 //}
 package com.matrimony.exception;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.matrimony.model.entity.ResponseEntity;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity handleValidationExceptions(MethodArgumentNotValidException ex) {
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity handleValidationExceptions(MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage()));
+		Map<String, String> errors = new HashMap<>();
+		ex.getBindingResult().getFieldErrors()
+				.forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+		logger.warn("Validation failed: {}", errors);
+		return new ResponseEntity("Validation failed", 400, errors);
+	}
 
-        logger.warn("Validation failed: {}", errors);
+	@ExceptionHandler(GenericException.class)
+	public ResponseEntity handleGenericException(GenericException ex) {
+		logger.warn("Business exception: {}", ex.getMessage());
+		return new ResponseEntity(ex.getMessage(), 403, null);
+	}
 
-        return new ResponseEntity("Validation failed", 400, errors);
-    }
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity handleAllExceptions(Exception ex) {
+		logger.error("Unexpected system error", ex);
+		return new ResponseEntity("Something went wrong. Please try again later.", 500, null);
+	}
 
-    /**
-     * Handle business exceptions
-     */
-    @ExceptionHandler(GenericException.class)
-    public ResponseEntity handleGenericException(GenericException ex) {
+	@ExceptionHandler(AuthorizationDeniedException.class)
+	public ResponseEntity handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
+		logger.warn("Access denied: {}", ex.getMessage());
+		return new ResponseEntity("Access Denied. You are not authorized to perform this action.", 403, null);
+	}
 
-        logger.warn("Business exception: {}", ex.getMessage());
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+		String message = "Invalid value for parameter: " + ex.getName();
+		return new ResponseEntity(message, 400, null);
+	}
 
-        return new ResponseEntity(ex.getMessage(), 403, null);
-    }
-
-    /**
-     * Handle unexpected errors
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity handleAllExceptions(Exception ex) {
-
-        logger.error("Unexpected system error", ex);
-
-        return new ResponseEntity("Something went wrong. Please try again later.", 500, null);
-    }
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity handleNoResourceFound(NoResourceFoundException ex) {
+	    return new ResponseEntity(
+	            "API endpoint not found: " + ex.getResourcePath(),
+	            404,
+	            null
+	    );
+	}
 }

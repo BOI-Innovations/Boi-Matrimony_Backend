@@ -29,6 +29,15 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
 	List<Profile> findByVerificationStatus(ProfileVerificationStatus status);
 
+    @Query("SELECT COUNT(p) FROM Profile p WHERE p.verificationStatus = :status")
+    Long countByVerificationStatus(@Param("status") String status);
+    
+    @Query("SELECT COUNT(p) FROM Profile p WHERE p.profileComplete = true AND p.user.isActive = true")
+    Long countActiveProfiles();
+    
+    @Query("SELECT COUNT(p) FROM Profile p WHERE p.gender = :gender")
+    Long countByGender(@Param("gender") String gender);
+    
 	@Query("SELECT p FROM Profile p WHERE LOWER(p.location.city) = LOWER(:city)")
 	Page<Profile> findByCityIgnoreCase(@Param("city") String city, Pageable pageable);
 
@@ -262,4 +271,6 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 				subCaste, gothra, star, rashi, highestEducation, employedIn, occupation, country, citizenship,
 				pageable);
 	}
+
+	Long countByGender(Gender gender);
 }

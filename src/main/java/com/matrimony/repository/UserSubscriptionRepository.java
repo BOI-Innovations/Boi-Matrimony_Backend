@@ -23,7 +23,19 @@ import com.matrimony.model.enums.SubscriptionStatus;
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, String> {
 
 	/* -------------------- Basic Finders -------------------- */
+	 @Query("""
+		        SELECT COUNT(DISTINCT us.user.id)
+		        FROM UserSubscription us
+		        WHERE us.status = com.matrimony.model.enums.SubscriptionStatus.ACTIVE
+		        AND us.endDate >= :currentDate
+		    """)
+		    Long countDistinctUsersWithActiveSubscription(@Param("currentDate") LocalDate currentDate);
 
+
+		    // ✅ 2. Count active subscriptions
+		    Long countByStatusAndEndDateAfter(SubscriptionStatus status, LocalDate date);
+
+		    
 	List<UserSubscription> findByUser(User user);
 
 	List<UserSubscription> findByUserAndStatus(User user, SubscriptionStatus status);

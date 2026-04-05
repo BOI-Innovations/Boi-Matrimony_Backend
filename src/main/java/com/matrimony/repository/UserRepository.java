@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -75,6 +76,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
 		       "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
 		       "OR u.phoneNumber LIKE CONCAT('%', :search, '%')")
 		Page<User> searchUsers(@Param("search") String search, Pageable pageable);
+
+	@Query("SELECT u FROM User u WHERE u.createdAt BETWEEN :startDate AND :endDate")
+	Page<User> findUsersByDateRange(
+	        @Param("startDate") LocalDateTime startDate,
+	        @Param("endDate") LocalDateTime endDate,
+	        Pageable pageable);
+
+	@Query("SELECT u FROM User u WHERE u.isActive = false AND " +
+		       "(LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+		Page<User> searchInactiveUsers(@Param("search") String search, Pageable pageable);
+
+	Long countByIsActiveTrue();
+
+	Long countByIsActiveFalse();
+
+	Long countByCreatedAtBetween(LocalDateTime todayStart, LocalDateTime todayEnd);
 
 
 }
