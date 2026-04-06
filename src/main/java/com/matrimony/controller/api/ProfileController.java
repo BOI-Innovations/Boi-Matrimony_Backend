@@ -1,5 +1,7 @@
 package com.matrimony.controller.api;
 
+import java.time.LocalDate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -64,9 +66,11 @@ public class ProfileController {
 	}
 
 	@GetMapping("/getAllProfiles")
-	public ResponseEntity getAllProfiles(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
-		return profileService.getAllProfiles(page, size);
+	public ResponseEntity getAllProfiles(
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        @RequestParam(required = false) LocalDate startDate,
+	        @RequestParam(required = false) LocalDate endDate) {
+	    return profileService.getAllProfiles(page, size, startDate, endDate);
 	}
-
 }

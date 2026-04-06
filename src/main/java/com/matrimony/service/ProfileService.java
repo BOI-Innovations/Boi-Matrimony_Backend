@@ -1,5 +1,7 @@
 package com.matrimony.service;
 
+import java.time.LocalDate;
+
 import com.matrimony.model.dto.request.ProfileRequest;
 import com.matrimony.model.entity.ResponseEntity;
 
@@ -24,6 +26,6 @@ public interface ProfileService {
 
 	Long getCurrentUserId();
 
-	ResponseEntity getAllProfiles(int page, int size);
+	ResponseEntity getAllProfiles(int page, int size, LocalDate startDate, LocalDate endDate);
 
 }
