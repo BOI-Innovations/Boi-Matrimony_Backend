@@ -1,5 +1,6 @@
 package com.matrimony.serviceImpl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +9,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,10 +43,6 @@ import com.matrimony.service.ProfileService;
 import com.matrimony.service.UserService;
 import com.matrimony.service.UserSubscriptionService;
 import com.matrimony.util.ProfileCalculator;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -128,17 +129,17 @@ public class ProfileServiceImpl implements ProfileService {
 //					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 //		}
 //	}
-	
+
 	public ResponseEntity getProfileById(Long id) {
-	    try {
+		try {
 
-	        boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
+			boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
 
-	        Profile profile = profileRepository.findById(id).orElse(null);
-	        if (profile == null) {
-	            return new ResponseEntity("Profile not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
-	        }
-	        ProfileResponse response = convertToResponse(profile);
+			Profile profile = profileRepository.findById(id).orElse(null);
+			if (profile == null) {
+				return new ResponseEntity("Profile not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+			ProfileResponse response = convertToResponse(profile);
 //	        if (!isPremiumUser) {
 //
 //	            response.setCaste(null);
@@ -162,82 +163,65 @@ public class ProfileServiceImpl implements ProfileService {
 //	            }
 //	        }
 
-	        return new ResponseEntity("Profile fetched successfully", HttpStatus.OK.value(), response);
+			return new ResponseEntity("Profile fetched successfully", HttpStatus.OK.value(), response);
 
-	    } catch (Exception e) {
-	        return new ResponseEntity(
-	                "Error fetching profile by ID: " + e.getMessage(),
-	                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	                null
-	        );
-	    }
+		} catch (Exception e) {
+			return new ResponseEntity("Error fetching profile by ID: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
-	public ResponseEntity getAllProfiles(int page, int size) {
-	    try {
-//	        boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
-	        
-	        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-	        Page<Profile> profilePage = profileRepository.findAll(pageable);
-	        
-	        if (profilePage.isEmpty()) {
-	            return new ResponseEntity(
-	                "No profiles found",
-	                HttpStatus.NOT_FOUND.value(),
-	                null
-	            );
-	        }
-	        
-	        List<ProfileResponse> responses = new ArrayList<>();
-	        
-	        for (Profile profile : profilePage.getContent()) {
-	            ProfileResponse response = mapResponse(profile);
-	            
-//	            if (!isPremiumUser) {
-//	                response.setCaste(null);
-//	                response.setSubCaste(null);
-//	                response.setGothra(null);
-//	                response.setStar(null);
-//	                response.setRashi(null);
-//	                response.setManglik(null);
-//	                
-//	                if (response.getFamilyDetails() != null) {
-//	                    response.getFamilyDetails().setParentsContactNo(null);
-//	                }
-//	                
-//	                if (response.getPreference() != null) {
-//	                    response.getPreference().setCastes(null);
-//	                    response.getPreference().setSubCastes(null);
-//	                    response.getPreference().setGothras(null);
-//	                    response.getPreference().setStars(null);
-//	                    response.getPreference().setRashis(null);
-//	                    response.getPreference().setManglik(null);
-//	                }
-//	            }
-	            
-	            responses.add(response);
-	        }
-	        
-	        Map<String, Object> responseMap = new HashMap<>();
-	        responseMap.put("profiles", responses);
-	        responseMap.put("currentPage", profilePage.getNumber());
-	        responseMap.put("totalItems", profilePage.getTotalElements());
-	        responseMap.put("totalPages", profilePage.getTotalPages());
-	        responseMap.put("pageSize", profilePage.getSize());
-	        
-	        return new ResponseEntity(
-	            "Profiles fetched successfully",
-	            HttpStatus.OK.value(),
-	            responseMap
-	        );
-	        
-	    } catch (Exception e) {
-	        return new ResponseEntity(
-	            "Error fetching all profiles: " + e.getMessage(),
-	            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-	            null
-	        );
-	    }
+	public ResponseEntity getAllProfiles(int page, int size, LocalDate startDate, LocalDate endDate) {
+		try {
+			Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+			Page<Profile> profilePage;
+
+			if (startDate != null && endDate != null) {
+				LocalDateTime startDateTime = startDate.atStartOfDay();
+				LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+				profilePage = profileRepository.findByCreatedAtBetween(startDateTime, endDateTime, pageable);
+
+			} else if (startDate != null) {
+				LocalDateTime startDateTime = startDate.atStartOfDay();
+				profilePage = profileRepository.findByCreatedAtGreaterThanEqual(startDateTime, pageable);
+
+			} else if (endDate != null) {
+				LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+				profilePage = profileRepository.findByCreatedAtLessThanEqual(endDateTime, pageable);
+
+			} else {
+				profilePage = profileRepository.findAll(pageable);
+			}
+
+			if (profilePage.isEmpty()) {
+				return new ResponseEntity("No profiles found", HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			List<ProfileResponse> responses = new ArrayList<>();
+
+			for (Profile profile : profilePage.getContent()) {
+				ProfileResponse response = mapResponse(profile);
+				responses.add(response);
+			}
+
+			Map<String, Object> responseMap = new HashMap<>();
+			responseMap.put("profiles", responses);
+			responseMap.put("currentPage", profilePage.getNumber());
+			responseMap.put("totalItems", profilePage.getTotalElements());
+			responseMap.put("totalPages", profilePage.getTotalPages());
+			responseMap.put("pageSize", profilePage.getSize());
+
+			Map<String, Object> filterInfo = new HashMap<>();
+			filterInfo.put("startDate", startDate);
+			filterInfo.put("endDate", endDate);
+			responseMap.put("dateFilters", filterInfo);
+
+			return new ResponseEntity("Profiles fetched successfully", HttpStatus.OK.value(), responseMap);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Error fetching all profiles: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 	@Override
@@ -435,7 +419,7 @@ public class ProfileServiceImpl implements ProfileService {
 			payload.put("occupation", occupation);
 			payload.put("city", city);
 			payload.put("country", country);
-		    payload.put("highestEducation", highestEducation);
+			payload.put("highestEducation", highestEducation);
 
 			return new ResponseEntity("Profile summary fetched", 200, payload);
 
@@ -478,19 +462,20 @@ public class ProfileServiceImpl implements ProfileService {
 		profile.setDrinkingHabits(request.getDrinkingHabits());
 		profile.setSmokingHabits(request.getSmokingHabits());
 		profile.setHasDisease(request.getHasDisease());
-		
-		if(Boolean.TRUE.equals(request.getHasDisease())) {
+
+		if (Boolean.TRUE.equals(request.getHasDisease())) {
 			profile.setDiseaseDetails(request.getDiseaseDetails());
-		}else {
+		} else {
 			profile.setDiseaseDetails(null);
 		}
 		profile.setDeclarationAccepted(request.getDeclarationAccepted());
-		if(Boolean.TRUE.equals(request.getDeclarationAccepted())) {
+		if (Boolean.TRUE.equals(request.getDeclarationAccepted())) {
 			profile.setDeclarationText(request.getDeclarationText());
-		}else {
+		} else {
 			profile.setDeclarationText(null);
 		}
 	}
+
 	private ProfileResponse mapResponse(Profile profile) {
 		ProfileResponse response = new ProfileResponse();
 		response.setId(profile.getId());
@@ -535,7 +520,7 @@ public class ProfileServiceImpl implements ProfileService {
 
 		return response;
 	}
-	
+
 	private ProfileResponse convertToResponse(Profile profile) {
 		ProfileResponse response = new ProfileResponse();
 		response.setId(profile.getId());

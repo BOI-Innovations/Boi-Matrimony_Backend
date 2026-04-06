@@ -301,4 +301,10 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 	     Long countByGenderAndDateRange(@Param("gender") Gender gender,
 	                                     @Param("fromDate") LocalDateTime fromDate,
 	                                     @Param("toDate") LocalDateTime toDate);
+
+		Page<Profile> findByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime, Pageable pageable);
+
+		Page<Profile> findByCreatedAtGreaterThanEqual(LocalDateTime startDateTime, Pageable pageable);
+
+		Page<Profile> findByCreatedAtLessThanEqual(LocalDateTime endDateTime, Pageable pageable);
 }
