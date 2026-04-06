@@ -94,5 +94,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Long countByCreatedAtBetween(LocalDateTime todayStart, LocalDateTime todayEnd);
 
-
+	 @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true AND " +
+	           "(:fromDate IS NULL OR u.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR u.createdAt <= :toDate)")
+	    Long countActiveUsersByDateRange(@Param("fromDate") LocalDateTime fromDate, 
+	                                      @Param("toDate") LocalDateTime toDate);
+	    
+	    @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = false AND " +
+	           "(:fromDate IS NULL OR u.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR u.createdAt <= :toDate)")
+	    Long countInactiveUsersByDateRange(@Param("fromDate") LocalDateTime fromDate, 
+	                                        @Param("toDate") LocalDateTime toDate);
+	    
+	    
 }

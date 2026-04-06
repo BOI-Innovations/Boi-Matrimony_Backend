@@ -1,6 +1,7 @@
 package com.matrimony.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -273,4 +274,31 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
 	}
 
 	Long countByGender(Gender gender);
+	
+	   @Query("SELECT COUNT(p) FROM Profile p WHERE p.verificationStatus = :status AND " +
+	           "(:fromDate IS NULL OR p.user.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR p.user.createdAt <= :toDate)")
+	    Long countVerifiedProfilesByDateRange(@Param("status") ProfileVerificationStatus status,
+	                                           @Param("fromDate") LocalDateTime fromDate,
+	                                           @Param("toDate") LocalDateTime toDate);
+	   
+	    @Query("SELECT COUNT(p) FROM Profile p WHERE p.verificationStatus = :status AND " +
+	            "(:fromDate IS NULL OR p.user.createdAt >= :fromDate) AND " +
+	            "(:toDate IS NULL OR p.user.createdAt <= :toDate)")
+	     Long countSuspendedProfilesByDateRange(@Param("status") ProfileVerificationStatus status,
+	                                             @Param("fromDate") LocalDateTime fromDate,
+	                                             @Param("toDate") LocalDateTime toDate);
+	    
+	    @Query("SELECT COUNT(p) FROM Profile p WHERE p.profileComplete = true AND p.user.isActive = true AND " +
+	            "(:fromDate IS NULL OR p.user.createdAt >= :fromDate) AND " +
+	            "(:toDate IS NULL OR p.user.createdAt <= :toDate)")
+	     Long countActiveProfilesByDateRange(@Param("fromDate") LocalDateTime fromDate,
+	                                          @Param("toDate") LocalDateTime toDate);
+	    
+	    @Query("SELECT COUNT(p) FROM Profile p WHERE p.gender = :gender AND " +
+	            "(:fromDate IS NULL OR p.user.createdAt >= :fromDate) AND " +
+	            "(:toDate IS NULL OR p.user.createdAt <= :toDate)")
+	     Long countByGenderAndDateRange(@Param("gender") Gender gender,
+	                                     @Param("fromDate") LocalDateTime fromDate,
+	                                     @Param("toDate") LocalDateTime toDate);
 }
