@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "subscription_plan")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class SubscriptionPlan {
 
 	@Id
@@ -20,13 +20,13 @@ public class SubscriptionPlan {
 	private String planId;
 
 	@Column(nullable = false, unique = true)
-	private String code; // BASIC, PREMIUM, GOLD, PLATINUM
+	private String code;
 
 	@Column(nullable = false)
-	private String name; // Basic Plan, Premium Plan
+	private String name;
 
 	@Column(nullable = false)
-	private Long price; // in rupees
+	private Long price;
 
 	@Column(nullable = false)
 	private Integer durationDays;

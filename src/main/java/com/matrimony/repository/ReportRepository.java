@@ -57,4 +57,17 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 	Page<Report> searchReports(@Param("search") String search, Pageable pageable);
 
 	Long countByStatus(String status);
+	
+	 @Query("SELECT COUNT(r) FROM Report r WHERE " +
+	           "(:fromDate IS NULL OR r.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR r.createdAt <= :toDate)")
+	    Long countByCreatedAtBetween(@Param("fromDate") LocalDateTime fromDate,
+	                                  @Param("toDate") LocalDateTime toDate);
+	    
+	    @Query("SELECT COUNT(r) FROM Report r WHERE r.status = :status AND " +
+	           "(:fromDate IS NULL OR r.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR r.createdAt <= :toDate)")
+	    Long countByStatusAndCreatedAtBetween(@Param("status") ReportStatus status,
+	                                           @Param("fromDate") LocalDateTime fromDate,
+	                                           @Param("toDate") LocalDateTime toDate);
 }

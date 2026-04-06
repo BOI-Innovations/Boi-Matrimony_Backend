@@ -23,19 +23,17 @@ import com.matrimony.model.enums.SubscriptionStatus;
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, String> {
 
 	/* -------------------- Basic Finders -------------------- */
-	 @Query("""
-		        SELECT COUNT(DISTINCT us.user.id)
-		        FROM UserSubscription us
-		        WHERE us.status = com.matrimony.model.enums.SubscriptionStatus.ACTIVE
-		        AND us.endDate >= :currentDate
-		    """)
-		    Long countDistinctUsersWithActiveSubscription(@Param("currentDate") LocalDate currentDate);
+	@Query("""
+			    SELECT COUNT(DISTINCT us.user.id)
+			    FROM UserSubscription us
+			    WHERE us.status = com.matrimony.model.enums.SubscriptionStatus.ACTIVE
+			    AND us.endDate >= :currentDate
+			""")
+	Long countDistinctUsersWithActiveSubscription(@Param("currentDate") LocalDate currentDate);
 
+	// ✅ 2. Count active subscriptions
+	Long countByStatusAndEndDateAfter(SubscriptionStatus status, LocalDate date);
 
-		    // ✅ 2. Count active subscriptions
-		    Long countByStatusAndEndDateAfter(SubscriptionStatus status, LocalDate date);
-
-		    
 	List<UserSubscription> findByUser(User user);
 
 	List<UserSubscription> findByUserAndStatus(User user, SubscriptionStatus status);
@@ -134,23 +132,22 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 	Optional<UserSubscription> findByUserAndPlanAndStatus(User user, SubscriptionPlan plan, SubscriptionStatus active);
 
 	List<UserSubscription> findByUserIdAndStatusOrderByEndDateDesc(Long userId, SubscriptionStatus active);
-	
+
 	@Query("""
-		    SELECT CASE WHEN COUNT(us) > 0 THEN true ELSE false END
-		    FROM UserSubscription us
-		    WHERE us.user.id = :userId
-		      AND us.status = :status
-		""")
-		boolean hasActiveSubscription(Long userId, SubscriptionStatus status);
+			    SELECT CASE WHEN COUNT(us) > 0 THEN true ELSE false END
+			    FROM UserSubscription us
+			    WHERE us.user.id = :userId
+			      AND us.status = :status
+			""")
+	boolean hasActiveSubscription(Long userId, SubscriptionStatus status);
 
-	  @Query("""
-		        SELECT COUNT(s) > 0
-		        FROM UserSubscription s
-		        WHERE s.user.id = :userId
-		        AND s.status = com.matrimony.model.enums.SubscriptionStatus.ACTIVE
-		        AND s.endDate >= CURRENT_DATE
-		    """)
-		    boolean existsActiveSubscription(Long userId);
-
+	@Query("""
+			    SELECT COUNT(s) > 0
+			    FROM UserSubscription s
+			    WHERE s.user.id = :userId
+			    AND s.status = com.matrimony.model.enums.SubscriptionStatus.ACTIVE
+			    AND s.endDate >= CURRENT_DATE
+			""")
+	boolean existsActiveSubscription(Long userId);
 
 }

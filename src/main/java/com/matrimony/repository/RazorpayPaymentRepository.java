@@ -1,6 +1,7 @@
 package com.matrimony.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,5 +22,12 @@ public interface RazorpayPaymentRepository extends JpaRepository<RazorpayPayment
 
 	@Query("SELECT COUNT(p) FROM RazorpayPayment p WHERE p.status = :status")
 	Long countByStatus(@Param("status") PaymentStatus status);
+	
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM RazorpayPayment p WHERE p.status = :status AND " +
+            "(:fromDate IS NULL OR p.createdAt >= :fromDate) AND " +
+            "(:toDate IS NULL OR p.createdAt <= :toDate)")
+     BigDecimal sumSuccessfulPaymentsByDateRange(@Param("status") PaymentStatus status,
+                                                  @Param("fromDate") LocalDateTime fromDate,
+                                                  @Param("toDate") LocalDateTime toDate);
 
 }

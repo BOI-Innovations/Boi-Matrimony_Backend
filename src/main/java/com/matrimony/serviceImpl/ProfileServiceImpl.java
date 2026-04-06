@@ -1,6 +1,7 @@
 package com.matrimony.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,10 @@ import com.matrimony.service.ProfileService;
 import com.matrimony.service.UserService;
 import com.matrimony.service.UserSubscriptionService;
 import com.matrimony.util.ProfileCalculator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -134,28 +139,28 @@ public class ProfileServiceImpl implements ProfileService {
 	            return new ResponseEntity("Profile not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
 	        }
 	        ProfileResponse response = convertToResponse(profile);
-	        if (!isPremiumUser) {
-
-	            response.setCaste(null);
-	            response.setSubCaste(null);
-	            response.setGothra(null);
-	            response.setStar(null);
-	            response.setRashi(null);
-	            response.setManglik(null);
-
-	            if (response.getFamilyDetails() != null) {
-	                response.getFamilyDetails().setParentsContactNo(null);
-	            }
-
-	            if (response.getPreference() != null) {
-	                response.getPreference().setCastes(null);
-	                response.getPreference().setSubCastes(null);
-	                response.getPreference().setGothras(null);
-	                response.getPreference().setStars(null);
-	                response.getPreference().setRashis(null);
-	                response.getPreference().setManglik(null);
-	            }
-	        }
+//	        if (!isPremiumUser) {
+//
+//	            response.setCaste(null);
+//	            response.setSubCaste(null);
+//	            response.setGothra(null);
+//	            response.setStar(null);
+//	            response.setRashi(null);
+//	            response.setManglik(null);
+//
+//	            if (response.getFamilyDetails() != null) {
+//	                response.getFamilyDetails().setParentsContactNo(null);
+//	            }
+//
+//	            if (response.getPreference() != null) {
+//	                response.getPreference().setCastes(null);
+//	                response.getPreference().setSubCastes(null);
+//	                response.getPreference().setGothras(null);
+//	                response.getPreference().setStars(null);
+//	                response.getPreference().setRashis(null);
+//	                response.getPreference().setManglik(null);
+//	            }
+//	        }
 
 	        return new ResponseEntity("Profile fetched successfully", HttpStatus.OK.value(), response);
 
@@ -168,6 +173,72 @@ public class ProfileServiceImpl implements ProfileService {
 	    }
 	}
 
+	public ResponseEntity getAllProfiles(int page, int size) {
+	    try {
+//	        boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
+	        
+	        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+	        Page<Profile> profilePage = profileRepository.findAll(pageable);
+	        
+	        if (profilePage.isEmpty()) {
+	            return new ResponseEntity(
+	                "No profiles found",
+	                HttpStatus.NOT_FOUND.value(),
+	                null
+	            );
+	        }
+	        
+	        List<ProfileResponse> responses = new ArrayList<>();
+	        
+	        for (Profile profile : profilePage.getContent()) {
+	            ProfileResponse response = mapResponse(profile);
+	            
+//	            if (!isPremiumUser) {
+//	                response.setCaste(null);
+//	                response.setSubCaste(null);
+//	                response.setGothra(null);
+//	                response.setStar(null);
+//	                response.setRashi(null);
+//	                response.setManglik(null);
+//	                
+//	                if (response.getFamilyDetails() != null) {
+//	                    response.getFamilyDetails().setParentsContactNo(null);
+//	                }
+//	                
+//	                if (response.getPreference() != null) {
+//	                    response.getPreference().setCastes(null);
+//	                    response.getPreference().setSubCastes(null);
+//	                    response.getPreference().setGothras(null);
+//	                    response.getPreference().setStars(null);
+//	                    response.getPreference().setRashis(null);
+//	                    response.getPreference().setManglik(null);
+//	                }
+//	            }
+	            
+	            responses.add(response);
+	        }
+	        
+	        Map<String, Object> responseMap = new HashMap<>();
+	        responseMap.put("profiles", responses);
+	        responseMap.put("currentPage", profilePage.getNumber());
+	        responseMap.put("totalItems", profilePage.getTotalElements());
+	        responseMap.put("totalPages", profilePage.getTotalPages());
+	        responseMap.put("pageSize", profilePage.getSize());
+	        
+	        return new ResponseEntity(
+	            "Profiles fetched successfully",
+	            HttpStatus.OK.value(),
+	            responseMap
+	        );
+	        
+	    } catch (Exception e) {
+	        return new ResponseEntity(
+	            "Error fetching all profiles: " + e.getMessage(),
+	            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+	            null
+	        );
+	    }
+	}
 
 	@Override
 	public ResponseEntity getProfileByUserId(Long userId) {
@@ -420,7 +491,51 @@ public class ProfileServiceImpl implements ProfileService {
 			profile.setDeclarationText(null);
 		}
 	}
+	private ProfileResponse mapResponse(Profile profile) {
+		ProfileResponse response = new ProfileResponse();
+		response.setId(profile.getId());
+		response.setUserId(profile.getUser().getId());
+		response.setUsername(profile.getUser().getUsername());
+		response.setEmail(profile.getUser().getEmail());
+		response.setFirstName(profile.getFirstName());
+		response.setLastName(profile.getLastName());
+		response.setGender(profile.getGender());
+		response.setProfileCreatedFor(profile.getProfileCreatedFor());
+		response.setDateOfBirth(profile.getDateOfBirth());
+		response.setTimeOfBirth(profile.getTimeOfBirth());
+		response.setPlaceOfBirth(profile.getPlaceOfBirth());
+		response.setAge(profileCalculator.calculateAge(profile.getDateOfBirth()));
+		response.setReligion(profile.getReligion());
+		response.setCaste(profile.getCaste());
+		response.setSubCaste(profile.getSubCaste());
+		response.setMaritalStatus(profile.getMaritalStatus());
+		response.setHeightIn(profile.getHeightIn());
+		response.setWeight(profile.getWeight());
+		response.setPhysicalStatus(profile.getPhysicalStatus());
+		response.setMotherTongue(profile.getMotherTongue());
+		response.setLanguagesKnown(profile.getLanguagesKnown());
+		response.setGothra(profile.getGothra());
+		response.setStar(profile.getStar());
+		response.setRashi(profile.getRashi());
+		response.setManglik(profile.getManglik());
+		response.setAbout(profile.getAbout());
+//		response.setProfilePictureUrl(profile.getProfilePictureUrl());
+		response.setDietaryHabits(profile.getDietaryHabits());
+		response.setDrinkingHabits(profile.getDrinkingHabits());
+		response.setSmokingHabits(profile.getSmokingHabits());
+		response.setVerificationStatus(profile.getVerificationStatus());
+		response.setProfileComplete(profile.getProfileComplete());
+		response.setProfileCompletionPercentage(profile.getProfileCompletionPercentage());
+		response.setCreatedAt(profile.getCreatedAt());
+		response.setUpdatedAt(profile.getUpdatedAt());
+		response.setHasDisease(profile.getHasDisease());
+		response.setDiseaseDetails(profile.getDiseaseDetails());
+//		response.setDeclarationAccepted(profile.getDeclarationAccepted());
+//		response.setDeclarationText(profile.getDeclarationText());
 
+		return response;
+	}
+	
 	private ProfileResponse convertToResponse(Profile profile) {
 		ProfileResponse response = new ProfileResponse();
 		response.setId(profile.getId());

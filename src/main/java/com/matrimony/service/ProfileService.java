@@ -24,4 +24,6 @@ public interface ProfileService {
 
 	Long getCurrentUserId();
 
+	ResponseEntity getAllProfiles(int page, int size);
+
 }
