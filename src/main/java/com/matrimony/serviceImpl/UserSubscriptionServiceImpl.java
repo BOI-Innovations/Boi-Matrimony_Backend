@@ -2,12 +2,16 @@ package com.matrimony.serviceImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -15,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.matrimony.model.dto.request.UserSubscriptionRequest;
 import com.matrimony.model.dto.response.UserSubscriptionResponse;
+import com.matrimony.model.entity.Profile;
+import com.matrimony.model.entity.RazorpayPayment;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.SubscriptionPlan;
 import com.matrimony.model.entity.User;
@@ -251,4 +257,144 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
 		return r;
 	}
+
+	@Override
+    public ResponseEntity getAllSubscriptionsPaged(String search, int page, int limit) {
+        try {
+            Pageable pageable = PageRequest.of(page - 1, limit);
+            Page<UserSubscription> subscriptionsPage = subscriptionRepository.findAllSubscriptionsWithSearch(search, pageable);
+            
+            if (subscriptionsPage.isEmpty()) {
+                return new ResponseEntity("No subscriptions found", 404, null);
+            }
+            
+            List<UserSubscriptionResponse> responses = subscriptionsPage.getContent().stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("subscriptions", responses);
+            payload.put("currentPage", subscriptionsPage.getNumber() + 1);
+            payload.put("totalPages", subscriptionsPage.getTotalPages());
+            payload.put("totalSubscriptions", subscriptionsPage.getTotalElements());
+            
+            return new ResponseEntity("Success", 200, payload);
+            
+        } catch (Exception e) {
+            return new ResponseEntity("Error fetching subscriptions: " + e.getMessage(), 500, null);
+        }
+    }
+    
+    private UserSubscriptionResponse convertToResponse(UserSubscription subscription) {
+        UserSubscriptionResponse response = new UserSubscriptionResponse();
+        
+        response.setId(subscription.getId());
+        response.setStartDate(subscription.getStartDate());
+        response.setEndDate(subscription.getEndDate());
+        response.setStatus(subscription.getStatus());
+        response.setCreatedAt(subscription.getCreatedAt());
+        
+        User user = subscription.getUser();
+        if (user != null) {
+            response.setUserId(user.getId());
+            response.setUserName(user.getUsername());
+            
+            Profile profile = user.getProfile();
+            if (profile != null) {
+                String fullName = profile.getFirstName() + " " + profile.getLastName();
+                response.setUserName(fullName);
+            }
+        }
+        
+        SubscriptionPlan plan = subscription.getPlan();
+        if (plan != null) {
+            response.setPlanId(plan.getPlanId());
+            response.setPlanCode(plan.getCode()); 
+            response.setPlanName(plan.getName());
+            response.setPlanPrice(plan.getPrice());
+            response.setPlanDurationDays(plan.getDurationDays()); 
+        }
+        
+        RazorpayPayment payment = subscription.getPayment();
+        if (payment != null) {
+            response.setPaymentId(payment.getId());
+        }
+        
+        return response;
+    }
+
+    @Override
+    public ResponseEntity getSubscriptionsByDateRange(String startDate, String endDate, int page, int limit) {
+        try {
+            // Parse dates
+            LocalDate fromDate = LocalDate.parse(startDate);
+            LocalDate toDate = LocalDate.parse(endDate);
+            
+            Pageable pageable = PageRequest.of(page - 1, limit);
+            Page<UserSubscription> subscriptionsPage = subscriptionRepository
+                    .findSubscriptionsByDateRange(fromDate, toDate, pageable);
+            
+            if (subscriptionsPage.isEmpty()) {
+                return new ResponseEntity("No subscriptions found between " + startDate + " and " + endDate, 404, null);
+            }
+            
+            List<UserSubscriptionResponse> responses = subscriptionsPage.getContent().stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("subscriptions", responses);
+            payload.put("currentPage", subscriptionsPage.getNumber() + 1);
+            payload.put("totalPages", subscriptionsPage.getTotalPages());
+            payload.put("totalSubscriptions", subscriptionsPage.getTotalElements());
+            payload.put("startDate", startDate);
+            payload.put("endDate", endDate);
+            
+            return new ResponseEntity("Success", 200, payload);
+            
+        } catch (DateTimeParseException e) {
+            return new ResponseEntity("Invalid date format. Please use yyyy-MM-dd format", 400, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity("Error fetching subscriptions by date range: " + e.getMessage(), 500, null);
+        }
+    }
+    
+    @Override
+    public ResponseEntity getSubscriptionsByStatus(String status, int page, int limit) {
+        try {
+            SubscriptionStatus subscriptionStatus;
+            try {
+                subscriptionStatus = SubscriptionStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return new ResponseEntity("Invalid status. Valid statuses: ACTIVE, EXPIRED, CANCELLED, PENDING_RENEWAL", 400, null);
+            }
+            
+            Pageable pageable = PageRequest.of(page - 1, limit);
+            Page<UserSubscription> subscriptionsPage = subscriptionRepository
+                    .findSubscriptionsByStatus(subscriptionStatus.toString(), pageable);
+            
+            if (subscriptionsPage.isEmpty()) {
+                return new ResponseEntity("No subscriptions found with status: " + status, 404, null);
+            }
+            
+            List<UserSubscriptionResponse> responses = subscriptionsPage.getContent().stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("subscriptions", responses);
+            payload.put("currentPage", subscriptionsPage.getNumber() + 1);
+            payload.put("totalPages", subscriptionsPage.getTotalPages());
+            payload.put("totalSubscriptions", subscriptionsPage.getTotalElements());
+            payload.put("status", status);
+            
+            return new ResponseEntity("Success", 200, payload);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity("Error fetching subscriptions by status: " + e.getMessage(), 500, null);
+        }
+    }
+	
 }

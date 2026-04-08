@@ -3,9 +3,12 @@ package com.matrimony.model.entity;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.matrimony.model.enums.HelpRequestStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,7 +39,8 @@ public class HelpRequest {
 	@Column(columnDefinition = "TEXT")
 	private String message;
 
-	private String status = "OPEN";
+	@Enumerated(EnumType.STRING)
+	private HelpRequestStatus status  = HelpRequestStatus.PENDING;
 
 	@PrePersist
 	public void onCreate() {
@@ -103,20 +107,21 @@ public class HelpRequest {
 		this.message = message;
 	}
 
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
+	
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public HelpRequestStatus getHelpRequestStatus() {
+		return status ;
+	}
+
+	public void setHelpRequestStatus(HelpRequestStatus status ) {
+		this.status  = status ;
 	}
 
 }

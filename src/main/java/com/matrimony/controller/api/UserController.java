@@ -27,17 +27,11 @@ import com.matrimony.serviceImpl.ProfileServiceImpl;
 @CrossOrigin(allowedHeaders = "*")
 public class UserController {
 
-	private final SearchController searchController;
-
 	@Autowired
 	ProfileServiceImpl profileServiceImpl;
 
 	@Autowired
 	private UserService userService;
-
-	UserController(SearchController searchController) {
-		this.searchController = searchController;
-	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity getUserById(@PathVariable Long id) {

@@ -2,6 +2,8 @@ package com.matrimony.model.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.matrimony.model.enums.HelpRequestStatus;
+
 public class HelpRequestResponse {
 
 	private int id;
@@ -9,7 +11,7 @@ public class HelpRequestResponse {
 	private String email;
 	private String subject;
 	private String message;
-	private String status;
+	private HelpRequestStatus status;
 	private LocalDateTime createdAt;
 
 	public int getId() {
@@ -60,11 +62,11 @@ public class HelpRequestResponse {
 		this.createdAt = createdAt;
 	}
 
-	public String getStatus() {
+	public HelpRequestStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(HelpRequestStatus status) {
 		this.status = status;
 	}
 

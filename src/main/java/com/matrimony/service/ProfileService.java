@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.matrimony.model.dto.request.ProfileRequest;
 import com.matrimony.model.entity.ResponseEntity;
+import com.matrimony.model.enums.ProfileVerificationStatus;
 
 public interface ProfileService {
 	ResponseEntity getCurrentUserProfile();
@@ -27,5 +28,7 @@ public interface ProfileService {
 	Long getCurrentUserId();
 
 	ResponseEntity getAllProfiles(int page, int size, LocalDate startDate, LocalDate endDate);
+
+	ResponseEntity updateProfileStatus(Long id, ProfileVerificationStatus status);
 
 }

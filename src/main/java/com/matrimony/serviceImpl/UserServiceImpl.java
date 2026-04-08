@@ -34,6 +34,7 @@ import com.matrimony.model.dto.response.UserResponse;
 import com.matrimony.model.entity.HelpRequest;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
+import com.matrimony.model.enums.HelpRequestStatus;
 import com.matrimony.model.enums.RoleName;
 import com.matrimony.repository.HelpRequestRepository;
 import com.matrimony.repository.UserRepository;
@@ -846,12 +847,12 @@ public class UserServiceImpl implements UserService {
 			}
 
 			HelpRequest helpRequest = new HelpRequest();
-			helpRequest.setUser(user); // nullable
+			helpRequest.setUser(user);
 			helpRequest.setName(request.getName());
 			helpRequest.setEmail(request.getEmail());
 			helpRequest.setSubject(request.getSubject());
 			helpRequest.setMessage(request.getMessage());
-			helpRequest.setStatus("OPEN");
+			helpRequest.setHelpRequestStatus(HelpRequestStatus.PENDING);
 
 			HelpRequest saved = helpRequestRepository.save(helpRequest);
 			HelpRequestResponse responseDto = mapToResponse(saved);
@@ -870,7 +871,7 @@ public class UserServiceImpl implements UserService {
 		response.setEmail(helpRequest.getEmail());
 		response.setSubject(helpRequest.getSubject());
 		response.setMessage(helpRequest.getMessage());
-		response.setStatus(helpRequest.getStatus());
+		response.setStatus(helpRequest.getHelpRequestStatus());
 		response.setCreatedAt(helpRequest.getCreatedAt());
 		return response;
 	}

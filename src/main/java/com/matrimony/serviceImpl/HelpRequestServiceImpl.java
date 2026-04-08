@@ -14,6 +14,7 @@ import com.matrimony.model.dto.response.HelpRequestResponse;
 import com.matrimony.model.entity.HelpRequest;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
+import com.matrimony.model.enums.HelpRequestStatus;
 import com.matrimony.repository.HelpRequestRepository;
 import com.matrimony.service.HelpRequestService;
 import com.matrimony.service.UserService;
@@ -35,7 +36,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 		response.setEmail(helpRequest.getEmail());
 		response.setSubject(helpRequest.getSubject());
 		response.setMessage(helpRequest.getMessage());
-		response.setStatus(helpRequest.getStatus());
+		response.setStatus(helpRequest.getHelpRequestStatus());
 		response.setCreatedAt(helpRequest.getCreatedAt());
 		return response;
 	}
@@ -56,7 +57,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 			helpRequest.setEmail(request.getEmail());
 			helpRequest.setSubject(request.getSubject());
 			helpRequest.setMessage(request.getMessage());
-			helpRequest.setStatus("OPEN");
+			helpRequest.setHelpRequestStatus(HelpRequestStatus.PENDING);
 
 			HelpRequest saved = helpRequestRepository.save(helpRequest);
 			HelpRequestResponse responseDto = mapToResponse(saved);
@@ -103,7 +104,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 	}
 
 	@Override
-	public ResponseEntity updateStatus(Long id, String status) {
+	public ResponseEntity updateStatus(Long id, HelpRequestStatus status) {
 		try {
 			Optional<HelpRequest> existing = helpRequestRepository.findById(id);
 			if (existing.isEmpty()) {
@@ -111,7 +112,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 			}
 
 			HelpRequest helpRequest = existing.get();
-			helpRequest.setStatus(status);
+			helpRequest.setHelpRequestStatus(status);
 			HelpRequest updated = helpRequestRepository.save(helpRequest);
 
 			HelpRequestResponse responseDto = mapToResponse(updated);
