@@ -1,6 +1,7 @@
 package com.matrimony.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.matrimony.model.dto.request.HelpRequestRequest;
 import com.matrimony.model.entity.ResponseEntity;
+import com.matrimony.model.enums.HelpRequestStatus;
 import com.matrimony.service.HelpRequestService;
 
 @RestController
@@ -34,22 +36,24 @@ public class HelpRequestController {
 		return helpRequestService.getMyHelpRequests();
 	}
 
-	@GetMapping("/all-requests")
+	@GetMapping("/getAllHelpRequest")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity getAllHelpRequests() {
 		return helpRequestService.getAllHelpRequests();
 	}
 
-	@GetMapping("/{id}")
+	@GetMapping("getHelpRequestById/{id}")
 	public ResponseEntity getHelpRequestById(@PathVariable Long id) {
 		return helpRequestService.getHelpRequestById(id);
 	}
 
-	@PutMapping("/{id}/status")
-	public ResponseEntity updateStatus(@PathVariable Long id, @RequestParam String status) {
+	@PutMapping("updateHelpRequestStatus/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity updateStatus(@PathVariable Long id, @RequestParam HelpRequestStatus status) {
 		return helpRequestService.updateStatus(id, status);
 	}
 
-	@DeleteMapping("/{id}")
+	@DeleteMapping("deleteHelpRequestById/{id}")
 	public ResponseEntity deleteHelpRequest(@PathVariable Long id) {
 		return helpRequestService.deleteHelpRequest(id);
 	}

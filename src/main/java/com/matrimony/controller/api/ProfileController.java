@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.matrimony.model.dto.request.ProfileRequest;
 import com.matrimony.model.entity.ResponseEntity;
+import com.matrimony.model.enums.ProfileVerificationStatus;
 import com.matrimony.service.ProfileService;
 
 import jakarta.validation.Valid;
@@ -54,6 +55,11 @@ public class ProfileController {
 		return profileService.updateProfile(request);
 	}
 
+	@PutMapping("/changeProfileStatus/{id}")
+	public ResponseEntity updateProfileStatus(@PathVariable Long id, @RequestParam ProfileVerificationStatus status) {
+		return profileService.updateProfileStatus(id, status);
+	}
+
 	@DeleteMapping("/{id}")
 	@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
 	public ResponseEntity deleteProfile(@PathVariable Long id) {
@@ -66,11 +72,9 @@ public class ProfileController {
 	}
 
 	@GetMapping("/getAllProfiles")
-	public ResponseEntity getAllProfiles(
-	        @RequestParam(defaultValue = "0") int page,
-	        @RequestParam(defaultValue = "10") int size,
-	        @RequestParam(required = false) LocalDate startDate,
-	        @RequestParam(required = false) LocalDate endDate) {
-	    return profileService.getAllProfiles(page, size, startDate, endDate);
+	public ResponseEntity getAllProfiles(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size, @RequestParam(required = false) LocalDate startDate,
+			@RequestParam(required = false) LocalDate endDate) {
+		return profileService.getAllProfiles(page, size, startDate, endDate);
 	}
 }

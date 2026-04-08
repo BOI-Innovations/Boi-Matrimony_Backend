@@ -24,12 +24,12 @@ public class DashboardController {
             Map<String, Object> dashboardData = dashboardService.getDashboardData();
             return new ResponseEntity("Success", HttpStatus.OK.value(), dashboardData);
         } catch (Exception e) {
-            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(), 
-                                     HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
         }
     }
-    
-    @GetMapping("/dateByDateRange")
+
+    @GetMapping("/getDashboardData")
     public ResponseEntity getDashboardData(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate) {
@@ -37,10 +37,36 @@ public class DashboardController {
             Map<String, Object> dashboardData = dashboardService.getDashboardData(fromDate, toDate);
             return new ResponseEntity("Success", HttpStatus.OK.value(), dashboardData);
         } catch (Exception e) {
-            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(), 
-                                     HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
         }
     }
     
+    @GetMapping("/getReportsAndAnalysisData")
+    public ResponseEntity getReportsAndAnalysisData(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate) {
+        try {
+            Map<String, Object> dashboardData = dashboardService.getDateRangeDashboardData(fromDate, toDate);
+            return new ResponseEntity("Success", HttpStatus.OK.value(), dashboardData);
+        } catch (Exception e) {
+            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+        }
+    }
     
+    @GetMapping("/getAdvanceAnalysisData")
+    public ResponseEntity getOverviewDashboardData(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate) {
+        try {
+            Map<String, Object> dashboardData = dashboardService.getAdvanceAnalysisData(fromDate, toDate);
+            return new ResponseEntity("Success", HttpStatus.OK.value(), dashboardData);
+        } catch (Exception e) {
+            return new ResponseEntity("Error fetching dashboard data: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+        }
+    }
+    
+
 }

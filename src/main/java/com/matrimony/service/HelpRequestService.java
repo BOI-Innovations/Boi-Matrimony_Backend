@@ -2,6 +2,7 @@ package com.matrimony.service;
 
 import com.matrimony.model.dto.request.HelpRequestRequest;
 import com.matrimony.model.entity.ResponseEntity;
+import com.matrimony.model.enums.HelpRequestStatus;
 
 public interface HelpRequestService {
 
@@ -11,9 +12,9 @@ public interface HelpRequestService {
 
 	ResponseEntity getHelpRequestById(Long id);
 
-	ResponseEntity updateStatus(Long id, String status);
-
 	ResponseEntity deleteHelpRequest(Long id);
 
 	ResponseEntity getAllHelpRequests();
+
+	ResponseEntity updateStatus(Long id, HelpRequestStatus status);
 }

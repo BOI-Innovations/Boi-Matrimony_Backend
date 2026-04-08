@@ -37,6 +37,8 @@ import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ProfilePreference;
 import com.matrimony.model.entity.ResponseEntity;
 import com.matrimony.model.entity.User;
+import com.matrimony.model.enums.ProfileVerificationStatus;
+import com.matrimony.repository.HobbiesAndInterestsRepository;
 import com.matrimony.repository.ProfileRepository;
 import com.matrimony.security.services.UserPrincipal;
 import com.matrimony.service.ProfileService;
@@ -50,6 +52,8 @@ import jakarta.persistence.PersistenceContext;
 @Service
 @Transactional
 public class ProfileServiceImpl implements ProfileService {
+
+	private final HobbiesAndInterestsRepository hobbiesAndInterestsRepository;
 
 	@Autowired
 	private ProfileRepository profileRepository;
@@ -65,6 +69,10 @@ public class ProfileServiceImpl implements ProfileService {
 
 	@Autowired
 	private UserSubscriptionService userSubscriptionService;
+
+	ProfileServiceImpl(HobbiesAndInterestsRepository hobbiesAndInterestsRepository) {
+		this.hobbiesAndInterestsRepository = hobbiesAndInterestsRepository;
+	}
 
 	@Override
 	public Long getCurrentUserId() {
@@ -133,7 +141,7 @@ public class ProfileServiceImpl implements ProfileService {
 	public ResponseEntity getProfileById(Long id) {
 		try {
 
-			boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
+//			boolean isPremiumUser = userSubscriptionService.hasAnActiveSubscription();
 
 			Profile profile = profileRepository.findById(id).orElse(null);
 			if (profile == null) {
@@ -712,6 +720,25 @@ public class ProfileServiceImpl implements ProfileService {
 		response.setResidencyStatus(location.getResidencyStatus());
 		response.setLivingSinceYear(location.getLivingSinceYear());
 		return response;
+	}
+
+	public ResponseEntity updateProfileStatus(Long id, ProfileVerificationStatus status) {
+		try {
+			Profile profile = profileRepository.findById(id).orElse(null);
+
+			if (profile == null) {
+				return new ResponseEntity("Profile not found with id: " + id, HttpStatus.NOT_FOUND.value(), null);
+			}
+
+			profile.setVerificationStatus(status);
+			profileRepository.save(profile);
+
+			return new ResponseEntity("Profile status updated successfully", HttpStatus.OK.value(), status);
+
+		} catch (Exception e) {
+			return new ResponseEntity("Error updating profile status: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
+		}
 	}
 
 }

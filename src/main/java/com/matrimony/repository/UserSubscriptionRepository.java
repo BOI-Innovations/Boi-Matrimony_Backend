@@ -150,4 +150,50 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 			""")
 	boolean existsActiveSubscription(Long userId);
 
+	@Query(value = "SELECT us.* FROM user_subscription us " + "LEFT JOIN users u ON us.user_id = u.id "
+			+ "LEFT JOIN profiles p ON u.id = p.user_id " + "LEFT JOIN subscription_plan pl ON us.plan_id = pl.plan_id "
+			+ "LEFT JOIN razorpay_payment pay ON us.payment_id = pay.payment_id "
+			+ "WHERE (:search IS NULL OR :search = '' OR "
+			+ "       LOWER(p.first_name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(p.last_name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(CONCAT(p.first_name, ' ', p.last_name)) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(u.phone_number) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(pl.name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       CAST(pl.price AS CHAR) LIKE CONCAT('%', :search, '%') OR "
+			+ "       LOWER(us.status) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+			+ "       LOWER(pay.status) LIKE LOWER(CONCAT('%', :search, '%'))) "
+			+ "ORDER BY us.created_at DESC", countQuery = "SELECT COUNT(*) FROM user_subscription us "
+					+ "LEFT JOIN users u ON us.user_id = u.id " + "LEFT JOIN profiles p ON u.id = p.user_id "
+					+ "LEFT JOIN subscription_plan pl ON us.plan_id = pl.plan_id "
+					+ "LEFT JOIN razorpay_payment pay ON us.payment_id = pay.payment_id "
+					+ "WHERE (:search IS NULL OR :search = '' OR "
+					+ "       LOWER(p.first_name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(p.last_name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(CONCAT(p.first_name, ' ', p.last_name)) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(u.phone_number) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(pl.name) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       CAST(pl.price AS CHAR) LIKE CONCAT('%', :search, '%') OR "
+					+ "       LOWER(us.status) LIKE LOWER(CONCAT('%', :search, '%')) OR "
+					+ "       LOWER(pay.status) LIKE LOWER(CONCAT('%', :search, '%')))", nativeQuery = true)
+	Page<UserSubscription> findAllSubscriptionsWithSearch(@Param("search") String search, Pageable pageable);
+
+	@Query(value = "SELECT us.* FROM user_subscription us " + "LEFT JOIN users u ON us.user_id = u.id "
+			+ "LEFT JOIN profiles p ON u.id = p.user_id " + "LEFT JOIN subscription_plan pl ON us.plan_id = pl.plan_id "
+			+ "LEFT JOIN razorpay_payment pay ON us.payment_id = pay.payment_id "
+			+ "WHERE DATE(us.created_at) BETWEEN :startDate AND :endDate "
+			+ "ORDER BY us.created_at DESC", countQuery = "SELECT COUNT(*) FROM user_subscription us "
+					+ "WHERE DATE(us.created_at) BETWEEN :startDate AND :endDate", nativeQuery = true)
+	Page<UserSubscription> findSubscriptionsByDateRange(@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate, Pageable pageable);
+
+	@Query(value = "SELECT us.* FROM user_subscription us " + "LEFT JOIN users u ON us.user_id = u.id "
+			+ "LEFT JOIN profiles p ON u.id = p.user_id " + "LEFT JOIN subscription_plan pl ON us.plan_id = pl.plan_id "
+			+ "LEFT JOIN razorpay_payment pay ON us.payment_id = pay.payment_id " + "WHERE us.status = :status "
+			+ "ORDER BY us.created_at DESC", countQuery = "SELECT COUNT(*) FROM user_subscription us WHERE us.status = :status", nativeQuery = true)
+	Page<UserSubscription> findSubscriptionsByStatus(@Param("status") String status, Pageable pageable);
+
 }

@@ -7,31 +7,23 @@ import com.matrimony.model.entity.ResponseEntity;
 
 public interface UserSubscriptionService {
 
-    /* -------------------- CREATE -------------------- */
+	ResponseEntity createSubscription(UserSubscriptionRequest request);
 
-    ResponseEntity createSubscription(UserSubscriptionRequest request);
+	ResponseEntity getCurrentUserSubscription();
 
-    /* -------------------- CURRENT USER -------------------- */
+	ResponseEntity getUserSubscriptions(Long userId);
 
-    ResponseEntity getCurrentUserSubscription();
+	ResponseEntity expireSubscriptions();
 
-    /* -------------------- USER HISTORY -------------------- */
-
-    ResponseEntity getUserSubscriptions(Long userId);
-
-    /* -------------------- CANCEL -------------------- */
-
-//    ResponseEntity cancelSubscription(Long subscriptionId);
-
-    /* -------------------- EXPIRE (CRON / ADMIN) -------------------- */
-
-    ResponseEntity expireSubscriptions();
-
-    /* -------------------- PAGINATION -------------------- */
-
-    ResponseEntity getAllSubscriptionsPaged(Pageable pageable);
+	ResponseEntity getAllSubscriptionsPaged(Pageable pageable);
 
 	ResponseEntity hasActiveSubscription();
 
 	boolean hasAnActiveSubscription();
+
+	ResponseEntity getAllSubscriptionsPaged(String search, int page, int limit);
+
+	ResponseEntity getSubscriptionsByDateRange(String startDate, String endDate, int page, int limit);
+
+	ResponseEntity getSubscriptionsByStatus(String status, int page, int limit);
 }
