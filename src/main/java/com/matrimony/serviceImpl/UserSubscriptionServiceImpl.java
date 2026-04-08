@@ -396,5 +396,71 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
             return new ResponseEntity("Error fetching subscriptions by status: " + e.getMessage(), 500, null);
         }
     }
+
+    @Override
+    @Transactional
+    public ResponseEntity inactivateSubscriptions(List<String> subscriptionIds) {
+
+        if (subscriptionIds == null || subscriptionIds.isEmpty()) {
+            return new ResponseEntity("Subscription IDs list cannot be empty", 400, null);
+        }
+
+        List<UserSubscription> subscriptions =
+                subscriptionRepository.findAllById(subscriptionIds);
+
+        if (subscriptions.isEmpty()) {
+            return new ResponseEntity("No subscriptions found", 400, null);
+        }
+
+        int updatedCount = 0;
+
+        for (UserSubscription sub : subscriptions) {
+            if (sub.getStatus() == SubscriptionStatus.ACTIVE) {
+                sub.setStatus(SubscriptionStatus.EXPIRED);
+                updatedCount++;
+            }
+        }
+
+        subscriptionRepository.saveAll(subscriptions);
+
+        return new ResponseEntity(
+                updatedCount + " subscription(s) deactivated successfully",
+                200,
+                subscriptions
+        );
+    }
+    
+    @Override
+    @Transactional
+    public ResponseEntity activateUserSubscription(List<String> subscriptionIds) {
+
+        if (subscriptionIds == null || subscriptionIds.isEmpty()) {
+            return new ResponseEntity("Subscription IDs list cannot be empty", 400, null);
+        }
+
+        List<UserSubscription> subscriptions =
+                subscriptionRepository.findAllById(subscriptionIds);
+
+        if (subscriptions.isEmpty()) {
+            return new ResponseEntity("No subscriptions found", 400, null);
+        }
+
+        int updatedCount = 0;
+
+        for (UserSubscription sub : subscriptions) {
+            if (sub.getStatus() == SubscriptionStatus.EXPIRED) {
+                sub.setStatus(SubscriptionStatus.ACTIVE);
+                updatedCount++;
+            }
+        }
+
+        subscriptionRepository.saveAll(subscriptions);
+
+        return new ResponseEntity(
+                updatedCount + " subscription(s) activated successfully",
+                200,
+                subscriptions
+        );
+    }
 	
 }

@@ -1,5 +1,7 @@
 package com.matrimony.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 
 import com.matrimony.model.dto.request.UserSubscriptionRequest;
@@ -26,4 +28,8 @@ public interface UserSubscriptionService {
 	ResponseEntity getSubscriptionsByDateRange(String startDate, String endDate, int page, int limit);
 
 	ResponseEntity getSubscriptionsByStatus(String status, int page, int limit);
+
+	ResponseEntity inactivateSubscriptions(List<String> subscriptionIds);
+
+	ResponseEntity activateUserSubscription(List<String> subscriptionIds);
 }

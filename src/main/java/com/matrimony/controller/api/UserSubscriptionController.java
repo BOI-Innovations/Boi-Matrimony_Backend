@@ -1,11 +1,14 @@
 package com.matrimony.controller.api;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +32,18 @@ public class UserSubscriptionController {
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity createSubscription(@Valid @RequestBody UserSubscriptionRequest request) {
 		return subscriptionService.createSubscription(request);
+	}
+	
+	@PutMapping("/deactivateUserSubscription")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity inactivateSubscriptions(@RequestBody List<String> subscriptionIds) {
+	    return subscriptionService.inactivateSubscriptions(subscriptionIds);
+	}
+	
+	@PutMapping("/activateUserSubscription")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity activateUserSubscription(@RequestBody List<String> subscriptionIds) {
+	    return subscriptionService.activateUserSubscription(subscriptionIds);
 	}
 
 	@GetMapping("/my")

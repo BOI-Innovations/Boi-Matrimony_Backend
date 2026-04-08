@@ -14,7 +14,7 @@ import com.matrimony.model.enums.HelpRequestStatus;
 public interface HelpRequestRepository extends JpaRepository<HelpRequest, Long> {
 	List<HelpRequest> findByUser(User user);
 
-	Long countByStatus(String status);
+	Long countByStatus(HelpRequestStatus status);
 
 	@Query("SELECT COUNT(h) FROM HelpRequest h WHERE " + "(:fromDate IS NULL OR h.createdAt >= :fromDate) AND "
 			+ "(:toDate IS NULL OR h.createdAt <= :toDate)")

@@ -62,16 +62,12 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
 			if (plansPage.isEmpty()) {
 				return new ResponseEntity("No subscription plans found", 404, null);
 			}
-
-			// Get member counts for each plan - wrap in try-catch to prevent transaction
-			// rollback
 			List<SubscriptionPlanResponse> responses = new ArrayList<>();
 			for (SubscriptionPlan plan : plansPage.getContent()) {
 				try {
 					Long memberCount = subscriptionPlanRepository.getMemberCountByPlanId(plan.getPlanId());
 					responses.add(convertToResponseWithUsers(plan, memberCount != null ? memberCount.intValue() : 0));
 				} catch (Exception e) {
-					// Log error but continue with default value
 					System.err
 							.println("Error getting member count for plan " + plan.getPlanId() + ": " + e.getMessage());
 					responses.add(convertToResponseWithUsers(plan, 0));
@@ -91,24 +87,6 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
 			return new ResponseEntity("Error fetching subscription plans: " + e.getMessage(), 500, null);
 		}
 	}
-
-//    @Override
-//    public ResponseEntity getSubscriptionPlanById(String planId) {
-//        try {
-//            SubscriptionPlan plan = subscriptionPlanRepository.findById(planId).orElse(null);
-//
-//            if (plan == null) {
-//                return new ResponseEntity("Subscription plan not found with id: " + planId, 404, null);
-//            }
-//
-//            Long memberCount = subscriptionPlanRepository.getMemberCountByPlanId(planId);
-//            
-//            return new ResponseEntity("Success", 200, convertToResponseWithUsers(plan, memberCount != null ? memberCount.intValue() : 0));
-//
-//        } catch (Exception e) {
-//            return new ResponseEntity("Error fetching subscription plan: " + e.getMessage(), 500, null);
-//        }
-//    }
 
 	@Override
 	public ResponseEntity getSubscriptionPlanById(String planId) {
@@ -142,12 +120,9 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
 				plan.setPrice(request.getPrice());
 			}
 
-			if (request.getDurationDays() != null) {
-				plan.setDurationDays(request.getDurationDays());
-				if (plan.getPlanId() != null) {
-					plan.prePersist();
-				}
-			}
+		    if (request.getDurationDays() != null) {
+		        plan.setDurationDays(request.getDurationDays());
+		    }
 
 			if (request.getIsActive() != null) {
 				plan.setIsActive(request.getIsActive());
