@@ -93,7 +93,7 @@ public class AuthController {
 
 	
 	@PostMapping("/adminSignup")
-	@PreAuthorize("hasRole('ADMIN')")
+//	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity adminSignup(@Valid @RequestBody SignupRequest signUpRequest) {
 		return userService.adminSignup(signUpRequest);
 	}
