@@ -1,6 +1,7 @@
 package com.matrimony.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.matrimony.model.dto.request.ProfileRequest;
 import com.matrimony.model.entity.ResponseEntity;
@@ -30,5 +31,10 @@ public interface ProfileService {
 	ResponseEntity getAllProfiles(int page, int size, LocalDate startDate, LocalDate endDate);
 
 	ResponseEntity updateProfileStatus(Long id, ProfileVerificationStatus status);
+
+	ResponseEntity getAllProfilesForVerification(String search, int page, int limit);
+
+	ResponseEntity getProfilesForVerification(String search, int page, int limit, LocalDate fromDate,
+			LocalDate toDate);
 
 }

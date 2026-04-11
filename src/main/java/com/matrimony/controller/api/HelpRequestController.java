@@ -1,6 +1,9 @@
 package com.matrimony.controller.api;
 
+import java.time.LocalDate;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -54,7 +57,26 @@ public class HelpRequestController {
 	}
 
 	@DeleteMapping("deleteHelpRequestById/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity deleteHelpRequest(@PathVariable Long id) {
 		return helpRequestService.deleteHelpRequest(id);
 	}
+	
+	 @GetMapping("/getHelpRequests")
+	 @PreAuthorize("hasRole('ADMIN')")
+	    public ResponseEntity getHelpRequests(
+	            @RequestParam(required = false) String search,
+	            @RequestParam(defaultValue = "1") int page,
+	            @RequestParam(defaultValue = "10") int limit,
+	            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+	            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+	        
+	        try {
+	            return helpRequestService.getHelpRequests(search, page, limit, fromDate, toDate);
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return new ResponseEntity("Error fetching help requests: " + e.getMessage(), 500, null);
+	        }
+	    }
+	
 }

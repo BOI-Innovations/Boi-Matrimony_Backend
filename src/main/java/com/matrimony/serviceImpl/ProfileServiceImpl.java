@@ -2,8 +2,11 @@ package com.matrimony.serviceImpl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +43,7 @@ import com.matrimony.model.entity.User;
 import com.matrimony.model.enums.ProfileVerificationStatus;
 import com.matrimony.repository.HobbiesAndInterestsRepository;
 import com.matrimony.repository.ProfileRepository;
+import com.matrimony.repository.UserRepository;
 import com.matrimony.security.services.UserPrincipal;
 import com.matrimony.service.ProfileService;
 import com.matrimony.service.UserService;
@@ -57,6 +61,9 @@ public class ProfileServiceImpl implements ProfileService {
 
 	@Autowired
 	private ProfileRepository profileRepository;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	@Autowired
 	private UserService userService;
@@ -739,6 +746,187 @@ public class ProfileServiceImpl implements ProfileService {
 			return new ResponseEntity("Error updating profile status: " + e.getMessage(),
 					HttpStatus.INTERNAL_SERVER_ERROR.value(), null);
 		}
+	}
+
+	public ResponseEntity getAllProfilesForVerification(String search, int page, int limit) {
+		try {
+			int pageIndex = page - 1;
+			Pageable pageable = PageRequest.of(pageIndex, limit);
+
+			Page<User> userPage;
+			if (search != null && !search.trim().isEmpty()) {
+				userPage = userRepository.searchUsers(search, pageable);
+			} else {
+				userPage = userRepository.findAll(pageable);
+			}
+
+			List<Map<String, Object>> userList = new ArrayList<>();
+
+			for (User user : userPage.getContent()) {
+				Map<String, Object> userMap = new LinkedHashMap<>();
+
+				Profile profile = user.getProfile();
+
+				if (profile != null) {
+					userMap.put("id", profile.getId());
+
+					String fullName = profile.getFirstName() + " " + profile.getLastName();
+					userMap.put("name", fullName);
+
+					Integer age = null;
+					if (profile.getDateOfBirth() != null) {
+						age = Period.between(profile.getDateOfBirth(), LocalDate.now()).getYears();
+					}
+					userMap.put("age", age != null ? age : 0);
+
+					userMap.put("gender",
+							profile.getGender() != null ? profile.getGender().toString() : "Not Specified");
+
+					userMap.put("birthPlace",
+							profile.getPlaceOfBirth() != null ? profile.getPlaceOfBirth().toString() : "Not Specified");
+
+					String location = null;
+					if (profile.getLocation() != null && profile.getLocation().getCity() != null) {
+						location = profile.getLocation().getCity();
+					}
+					userMap.put("location", location != null ? location : "Not Specified");
+
+					userMap.put("profileCompletionPercentage",
+							profile.getProfileCompletionPercentage() != null
+									? profile.getProfileCompletionPercentage() + "%"
+									: "0%");
+
+					userMap.put("submitted",
+							profile.getCreatedAt() != null
+									? profile.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+									: null);
+
+					String status = profile.getVerificationStatus() != null ? profile.getVerificationStatus().toString()
+							: "PENDING";
+					userMap.put("status", status);
+
+				} else {
+					userMap.put("id", user.getId());
+					userMap.put("name", user.getUsername());
+					userMap.put("age", 0);
+					userMap.put("gender", "Not Specified");
+					userMap.put("birthPlace", "Not Specified");
+					userMap.put("location", "Not Specified");
+					userMap.put("profileCompletionPercentage", "0%");
+					userMap.put("submitted",
+							user.getCreatedAt() != null
+									? user.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+									: null);
+					userMap.put("status", "INCOMPLETE");
+				}
+
+				userList.add(userMap);
+			}
+
+			Map<String, Object> responsePayload = new LinkedHashMap<>();
+			responsePayload.put("data", userList);
+			responsePayload.put("pagination", Map.of("currentPage", page, "totalPages", userPage.getTotalPages(),
+					"totalItems", userPage.getTotalElements(), "itemsPerPage", limit));
+
+			return new ResponseEntity("Success", 200, responsePayload);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Error fetching users: " + e.getMessage(), 500, null);
+		}
+	}
+
+	public ResponseEntity getProfilesForVerification(String search, int page, int limit, LocalDate fromDate,
+			LocalDate toDate) {
+		int pageIndex = page - 1;
+		Pageable pageable = PageRequest.of(pageIndex, limit);
+
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(23, 59, 59) : null;
+
+		Page<User> userPage;
+
+		if (fromDate != null || toDate != null) {
+			if (search != null && !search.trim().isEmpty()) {
+				userPage = userRepository.searchUsersWithDateRange(search, fromDateTime, toDateTime, pageable);
+			} else {
+				userPage = userRepository.findUsersByDateRange(fromDateTime, toDateTime, pageable);
+			}
+		} else {
+			if (search != null && !search.trim().isEmpty()) {
+				userPage = userRepository.searchUsersForProfileVerification(search, pageable);
+			} else {
+				userPage = userRepository.findAllUsersWithProfile(pageable);
+			}
+		}
+
+		List<Map<String, Object>> userList = new ArrayList<>();
+
+		for (User user : userPage.getContent()) {
+			Map<String, Object> userMap = new LinkedHashMap<>();
+
+			Profile profile = user.getProfile();
+
+			if (profile != null) {
+				userMap.put("id", profile.getId());
+
+				String fullName = profile.getFirstName() + " " + profile.getLastName();
+				userMap.put("name", fullName);
+
+				Integer age = null;
+				if (profile.getDateOfBirth() != null) {
+					age = java.time.Period.between(profile.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+				}
+				userMap.put("age", age != null ? age : 0);
+
+				userMap.put("gender", profile.getGender() != null ? profile.getGender().toString() : "Not Specified");
+
+				userMap.put("birthPlace",
+						profile.getPlaceOfBirth() != null ? profile.getPlaceOfBirth() : "Not Specified");
+
+				String location = null;
+				if (profile.getLocation() != null && profile.getLocation().getCity() != null) {
+					location = profile.getLocation().getCity();
+				}
+				userMap.put("location", location != null ? location : "Not Specified");
+
+				userMap.put("profileCompletionPercentage",
+						profile.getProfileCompletionPercentage() != null
+								? profile.getProfileCompletionPercentage() + "%"
+								: "0%");
+
+				userMap.put("submitted",
+						profile.getCreatedAt() != null
+								? profile.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+								: null);
+
+				String status = profile.getVerificationStatus() != null ? profile.getVerificationStatus().toString()
+						: "PENDING";
+				userMap.put("status", status);
+
+			} else {
+				userMap.put("id", user.getId());
+				userMap.put("name", user.getUsername());
+				userMap.put("age", 0);
+				userMap.put("gender", "Not Specified");
+				userMap.put("birthPlace", "Not Specified");
+				userMap.put("location", "Not Specified");
+				userMap.put("profileCompletionPercentage", "0%");
+				userMap.put("submitted",
+						user.getCreatedAt() != null ? user.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+								: null);
+				userMap.put("status", "INCOMPLETE");
+			}
+
+			userList.add(userMap);
+		}
+
+		Map<String, Object> responsePayload = new LinkedHashMap<>();
+		responsePayload.put("data", userList);
+		responsePayload.put("pagination", Map.of("currentPage", page, "totalPages", userPage.getTotalPages(),
+				"totalItems", userPage.getTotalElements(), "itemsPerPage", limit));
+
+		return new ResponseEntity("Success", 200, responsePayload);
 	}
 
 }

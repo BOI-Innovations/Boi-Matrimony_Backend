@@ -834,6 +834,14 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public ResponseEntity createHelpRequest(HelpRequestRequest request) {
 		try {
+			boolean alreadyExists = helpRequestRepository.existsByEmailAndStatus(request.getEmail(),
+					HelpRequestStatus.PENDING);
+
+			if (alreadyExists) {
+				return new ResponseEntity("We’ve already received your request. Our team will get back to you soon.",
+						400, null);
+			}
+
 			User user = null;
 
 			try {
@@ -841,7 +849,6 @@ public class UserServiceImpl implements UserService {
 				if (username != null && !"anonymousUser".equals(username)) {
 					user = getUserByUsername(username);
 				}
-
 			} catch (Exception e) {
 				// ignore → user remains null
 			}

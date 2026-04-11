@@ -71,12 +71,57 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Query("select u.id from User u where u.username = :username")
 	Long findUserIdByUsername(String username);
 
-	@Query("SELECT u FROM User u LEFT JOIN u.profile p " +
-		       "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
-		       "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
-		       "OR u.phoneNumber LIKE CONCAT('%', :search, '%')")
-		Page<User> searchUsers(@Param("search") String search, Pageable pageable);
+//	@Query("SELECT u FROM User u LEFT JOIN u.profile p " +
+//		       "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+//		       "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+//		       "OR u.phoneNumber LIKE CONCAT('%', :search, '%')")
+//		Page<User> searchUsers(@Param("search") String search, Pageable pageable);
 
+	
+	@Query("SELECT DISTINCT u FROM User u " +
+	           "LEFT JOIN u.profile p " +
+	           "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR u.phoneNumber LIKE CONCAT('%', :search, '%') " +
+	           "OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CONCAT(p.lastName, ' ', p.firstName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CAST(p.gender AS string)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(p.placeOfBirth) LIKE LOWER(CONCAT('%', :search, '%'))")
+	    Page<User> searchUsers(@Param("search") String search, Pageable pageable);
+	
+	@Query("SELECT DISTINCT u FROM User u " +
+		       "JOIN u.profile p " +  // ✅ changed
+		       "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR u.phoneNumber LIKE CONCAT('%', :search, '%') " +
+		       "OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(CONCAT(p.lastName, ' ', p.firstName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(CAST(p.gender AS string)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+		       "OR LOWER(p.placeOfBirth) LIKE LOWER(CONCAT('%', :search, '%'))")
+		Page<User> searchUsersForProfileVerification(@Param("search") String search, Pageable pageable);
+	
+	  @Query("SELECT DISTINCT u FROM User u " +
+	           "LEFT JOIN u.profile p " +
+	           "WHERE (:fromDate IS NULL OR u.createdAt >= :fromDate) AND " +
+	           "(:toDate IS NULL OR u.createdAt <= :toDate) AND " +
+	           "(LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR u.phoneNumber LIKE CONCAT('%', :search, '%') " +
+	           "OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CONCAT(p.lastName, ' ', p.firstName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(CAST(p.gender AS string)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+	           "OR LOWER(p.placeOfBirth) LIKE LOWER(CONCAT('%', :search, '%')))")
+	    Page<User> searchUsersWithDateRange(@Param("search") String search,
+	                                        @Param("fromDate") LocalDateTime fromDate,
+	                                        @Param("toDate") LocalDateTime toDate,
+	                                        Pageable pageable);
+	
 	@Query("SELECT u FROM User u WHERE u.createdAt BETWEEN :startDate AND :endDate")
 	Page<User> findUsersByDateRange(
 	        @Param("startDate") LocalDateTime startDate,
@@ -107,4 +152,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	                                        @Param("toDate") LocalDateTime toDate);
 	    
 	    
+	    @Query("SELECT u FROM User u JOIN u.profile p")
+	    Page<User> findAllUsersWithProfile(Pageable pageable);
 }

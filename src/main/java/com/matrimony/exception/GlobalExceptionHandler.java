@@ -57,12 +57,16 @@
 //}
 package com.matrimony.exception;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -112,10 +116,24 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(NoResourceFoundException.class)
 	public ResponseEntity handleNoResourceFound(NoResourceFoundException ex) {
-	    return new ResponseEntity(
-	            "API endpoint not found: " + ex.getResourcePath(),
-	            404,
-	            null
-	    );
+		return new ResponseEntity("API endpoint not found: " + ex.getResourcePath(), 404, null);
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public org.springframework.http.ResponseEntity<com.matrimony.model.entity.ResponseEntity> handleMethodNotSupported(
+			HttpRequestMethodNotSupportedException ex) {
+
+		String message = "Method " + ex.getMethod() + " is not supported. Supported methods are: "
+				+ Arrays.toString(ex.getSupportedMethods());
+
+		com.matrimony.model.entity.ResponseEntity response = new com.matrimony.model.entity.ResponseEntity(message, 405,
+				null);
+		return new org.springframework.http.ResponseEntity<>(response, HttpStatus.METHOD_NOT_ALLOWED);
+	}
+
+	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+	public ResponseEntity handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+		return new ResponseEntity("Invalid Content-Type. Please use application/json",
+				HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), null);
 	}
 }
