@@ -52,8 +52,8 @@ public class UserController {
 	public ResponseEntity requestPasswordReset(@RequestParam String email) {
 		return userService.requestPasswordReset(email);
 	}
-	
-    //This is using in the user panel for forgot password
+
+	// This is using in the user panel for forgot password
 	@PostMapping("/reset-password")
 	public ResponseEntity resetPassword(@RequestParam String token, @RequestParam String newPassword) {
 		return userService.resetPassword(token, newPassword.trim());
@@ -165,15 +165,15 @@ public class UserController {
 	@PostMapping("/bulkDeactivateUsers")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity bulkDeactivateUsers(@RequestBody List<Long> userIds) {
-	    return userService.bulkDeactivateUsers(userIds);
+		return userService.bulkDeactivateUsers(userIds);
 	}
 
 	@PostMapping("/bulkActivateUsers")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity bulkActivateUsers(@RequestBody List<Long> userIds) {
-	    return userService.bulkActivateUsers(userIds);
+		return userService.bulkActivateUsers(userIds);
 	}
-	
+
 	@DeleteMapping("/deleteUser")
 	public ResponseEntity deleteUser(@RequestParam Long userId) {
 		return userService.deleteUser(userId);
@@ -183,6 +183,11 @@ public class UserController {
 	public ResponseEntity deleteAccount() {
 		Long userId = profileServiceImpl.getCurrentUserId();
 		return userService.deleteUser(userId);
+	}
+
+	@PostMapping("/sendWelcomeEmail")
+	public ResponseEntity sendWelcomeEmail(@RequestParam String email) {
+		return userService.sendWelcomeEmail(email);
 	}
 
 }

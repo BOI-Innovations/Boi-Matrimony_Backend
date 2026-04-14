@@ -111,6 +111,12 @@ public class UserServiceImpl implements UserService {
 			user.setVerificationToken(tokenGenerator.generateVerificationToken());
 
 			User savedUser = userRepository.save(user);
+			
+			try {
+	            sendWelcomeEmail(savedUser.getEmail());
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
 
 			UserResponse response = convertToUserResponse(savedUser);
 
