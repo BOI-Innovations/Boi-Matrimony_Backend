@@ -187,7 +187,7 @@ public class UserServiceImpl implements UserService {
 				return new ResponseEntity("Invalid email format.", 400, null);
 			}
 
-			String subject = "Welcome to Brahman Matrimony";
+			String subject = "Welcome to BOI Matrimony";
 			String htmlContent;
 			try {
 				htmlContent = loadHtmlTemplate("templates/email/welcome.html");
@@ -220,7 +220,7 @@ public class UserServiceImpl implements UserService {
 
 			int otp = random.nextInt(900000) + 100000;
 			String otpString = String.format("%06d", otp);
-			System.out.println("OTP is -------->>" + otpString);
+//			System.out.println("OTP is -------->>" + otpString);
 			otpStore.put(email, otpString);
 
 			String subject = "Your One-Time Password";
@@ -233,7 +233,7 @@ public class UserServiceImpl implements UserService {
 			}
 
 			String message = htmlContent.replace("{{OTP}}", otpString);
-			// emailService.sendHtmlEmail(email, subject, message);
+			emailService.sendHtmlEmail(email, subject, message);
 
 			return new ResponseEntity("OTP sent successfully.", 200, null);
 		} catch (Exception e) {
@@ -258,7 +258,7 @@ public class UserServiceImpl implements UserService {
 
 			int otp = random.nextInt(900000) + 100000;
 			String otpString = String.format("%06d", otp);
-			System.out.println("OTP IS ------------>>" + otpString);
+//			System.out.println("OTP IS ------------>>" + otpString);
 			otpStore.put(email, otpString);
 
 			String subject = "Your One-Time Password";
@@ -271,7 +271,7 @@ public class UserServiceImpl implements UserService {
 			}
 
 			String message = htmlContent.replace("{{OTP}}", otpString);
-			// emailService.sendHtmlEmail(email, subject, message);
+			emailService.sendHtmlEmail(email, subject, message);
 
 			return new ResponseEntity("OTP sent successfully.", 200, null);
 		} catch (Exception e) {
@@ -526,6 +526,17 @@ public class UserServiceImpl implements UserService {
 			user.setPassword(passwordEncoder.encode(newPassword));
 			user.setVerificationToken(tokenGenerator.generateVerificationToken());
 			userRepository.save(user);
+
+			String subject = "Password Reset Successful";
+			String htmlContent;
+
+			try {
+				htmlContent = loadHtmlTemplate("templates/email/password-reset-success.html");
+			} catch (IOException e) {
+				e.printStackTrace();
+				return new ResponseEntity("Password reset done, but email template failed.", 500, null);
+			}
+			emailService.sendHtmlEmail(user.getEmail(), subject, htmlContent);
 
 			return new ResponseEntity("Password reset successfully.", 200, null);
 		} catch (Exception e) {

@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -68,15 +67,8 @@ public class AuthController {
 			userService.save(user);
 
 			String fullName = profileRepository.findFullNameByUserId(user.getId());
-			JwtResponse jwtResponse = new JwtResponse(
-					accessToken,
-					user.getId(),
-					user.getUsername(),
-					user.getEmail(),
-					fullName,
-					user.getPhoneNumber(),
-					roles,
-					refreshToken);
+			JwtResponse jwtResponse = new JwtResponse(accessToken, user.getId(), user.getUsername(), user.getEmail(),
+					fullName, user.getPhoneNumber(), roles, refreshToken);
 
 			return new ResponseEntity("Login successful", HttpStatus.OK.value(), jwtResponse);
 
@@ -91,16 +83,14 @@ public class AuthController {
 		return userService.createUser(signUpRequest);
 	}
 
-	
 	@PostMapping("/adminSignup")
 //	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity adminSignup(@Valid @RequestBody SignupRequest signUpRequest) {
 		return userService.adminSignup(signUpRequest);
 	}
-	
+
 	@PostMapping("/refresh-token")
-	public ResponseEntity refreshToken(
-			@RequestHeader("Authorization") String authorizationHeader) {
+	public ResponseEntity refreshToken(@RequestHeader("Authorization") String authorizationHeader) {
 
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 			return new ResponseEntity("Invalid refresh token", HttpStatus.BAD_REQUEST.value(), null);
@@ -125,14 +115,8 @@ public class AuthController {
 				.collect(Collectors.toSet());
 
 		String fullName = profileRepository.findFullNameByUserId(user.getId());
-		JwtResponse jwtResponse = new JwtResponse(newAccessToken,
-				user.getId(),
-				user.getUsername(),
-				user.getEmail(),
-				fullName,
-				user.getPhoneNumber(),
-				roles,
-				newRefreshToken);
+		JwtResponse jwtResponse = new JwtResponse(newAccessToken, user.getId(), user.getUsername(), user.getEmail(),
+				fullName, user.getPhoneNumber(), roles, newRefreshToken);
 
 		return new ResponseEntity("Token refreshed successfully", HttpStatus.OK.value(), jwtResponse);
 	}

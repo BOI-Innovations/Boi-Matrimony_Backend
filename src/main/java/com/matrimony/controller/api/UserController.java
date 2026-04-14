@@ -52,7 +52,8 @@ public class UserController {
 	public ResponseEntity requestPasswordReset(@RequestParam String email) {
 		return userService.requestPasswordReset(email);
 	}
-
+	
+    //This is using in the user panel for forgot password
 	@PostMapping("/reset-password")
 	public ResponseEntity resetPassword(@RequestParam String token, @RequestParam String newPassword) {
 		return userService.resetPassword(token, newPassword.trim());

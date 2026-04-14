@@ -262,7 +262,7 @@ public class ProfileServiceImpl implements ProfileService {
 
 	@Override
 	public ResponseEntity createProfile(ProfileRequest profileRequest) {
-		System.out.println(profileRequest.toString());
+//		System.out.println(profileRequest.toString());
 		try {
 			String username = SecurityContextHolder.getContext().getAuthentication().getName();
 //			User user = userService.getUserByUsername(username);

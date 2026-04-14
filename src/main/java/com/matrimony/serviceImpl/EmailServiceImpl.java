@@ -411,7 +411,7 @@ public class EmailServiceImpl implements EmailService {
 			helper.setSubject(subject);
 			helper.setText(htmlContent, true);
 			try {
-				helper.setFrom(senderEmail, "Brahman Matrimony");
+				helper.setFrom(senderEmail, "BOI Matrimony");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}

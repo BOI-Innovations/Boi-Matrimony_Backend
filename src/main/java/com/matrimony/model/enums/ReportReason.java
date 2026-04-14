@@ -6,5 +6,6 @@ public enum ReportReason {
     HARASSMENT,
     SPAM,
     SCAM,
-    INAPPROPRIATE_CONTENT
+    INAPPROPRIATE_CONTENT,
+    OTHERS
 }

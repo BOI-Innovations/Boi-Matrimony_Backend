@@ -1,7 +1,6 @@
 package com.matrimony.controller.api;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -80,31 +79,26 @@ public class ProfileController {
 		return profileService.getAllProfiles(page, size, startDate, endDate);
 	}
 
-	
 	@GetMapping("/getAllProfilesForVerification")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity getAllProfilesForVerification(
-            @RequestParam(required = false, defaultValue = "") String search,
-            @RequestParam(defaultValue = "1") int page, 
-            @RequestParam(defaultValue = "10") int limit) {
-        return profileService.getAllProfilesForVerification(search, page, limit);
-    }
-	
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity getAllProfilesForVerification(
+			@RequestParam(required = false, defaultValue = "") String search,
+			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int limit) {
+		return profileService.getAllProfilesForVerification(search, page, limit);
+	}
+
 	@GetMapping("/profiles-for-verification")
-    public ResponseEntity getProfilesForVerificationWithDateRange(
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        
-        try {
-            return profileService.getProfilesForVerification(search, page, limit, fromDate, toDate);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity("Error fetching profiles for verification: " + e.getMessage(), 500, null);
-        }
-    }
-	
-	
+	public ResponseEntity getProfilesForVerificationWithDateRange(@RequestParam(required = false) String search,
+			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int limit,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+
+		try {
+			return profileService.getProfilesForVerification(search, page, limit, fromDate, toDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity("Error fetching profiles for verification: " + e.getMessage(), 500, null);
+		}
+	}
+
 }
