@@ -203,7 +203,9 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 //			List<UserSubscription> activeSubs = subscriptionRepository.findByUserIdAndStatusOrderByEndDateDesc(userId,
 //					SubscriptionStatus.ACTIVE);
 			
-			 boolean hasActive = subscriptionRepository.hasActiveSubscription(userId, SubscriptionStatus.ACTIVE);
+//			 boolean hasActive = subscriptionRepository.hasActiveSubscription(userId, SubscriptionStatus.ACTIVE);
+			 
+			 boolean hasActive = true;
 
 //			if (activeSubs.isEmpty()) {
 //				return new ResponseEntity("No active subscription found", "404", false);

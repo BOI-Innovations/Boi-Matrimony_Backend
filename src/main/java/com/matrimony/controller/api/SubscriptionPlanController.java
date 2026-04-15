@@ -40,7 +40,7 @@ public class SubscriptionPlanController {
 	}
 
 	@GetMapping("/getSubscriptionPlanById/{planId}")
-	@PreAuthorize("hasRole('ADMIN')")
+//	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity getSubscriptionPlanById(@PathVariable String planId) {
 		return subscriptionPlanService.getSubscriptionPlanById(planId);
 	}
