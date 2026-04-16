@@ -40,7 +40,7 @@ import com.razorpay.RazorpayClient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import com.razorpay.QrCode;
+
 @Service
 @Transactional
 public class PaymentServiceImpl implements PaymentService {
@@ -68,7 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Autowired
 	UserRepository userRepository;
-	
+
 	@Autowired
 	EmailService emailService;
 
@@ -219,51 +219,40 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Override
 	public com.matrimony.model.entity.ResponseEntity generateQr(String orderId) {
-	    try {
+		try {
 
-	        RazorpayClient client = new RazorpayClient(key, secret);
+			RazorpayClient client = new RazorpayClient(key, secret);
 
-	        // Fetch order from DB
-	        RazorpayOrder order = orderRepository
-	                .findByRazorpayOrderId(orderId)
-	                .orElseThrow(() -> new RuntimeException("Order not found"));
+			// Fetch order from DB
+			RazorpayOrder order = orderRepository.findByRazorpayOrderId(orderId)
+					.orElseThrow(() -> new RuntimeException("Order not found"));
 
-	        long amountInPaise = order.getAmount()
-	                .multiply(BigDecimal.valueOf(100))
-	                .longValueExact();
+			long amountInPaise = order.getAmount().multiply(BigDecimal.valueOf(100)).longValueExact();
 
-	        JSONObject qrRequest = new JSONObject();
-	        qrRequest.put("type", "upi_qr");
-	        qrRequest.put("name", "Community Membership");
-	        qrRequest.put("usage", "single_use");
-	        qrRequest.put("fixed_amount", true);
-	        qrRequest.put("payment_amount", amountInPaise);
-	        qrRequest.put("description", "Community Support Membership");
+			JSONObject qrRequest = new JSONObject();
+			qrRequest.put("type", "upi_qr");
+			qrRequest.put("name", "Community Membership");
+			qrRequest.put("usage", "single_use");
+			qrRequest.put("fixed_amount", true);
+			qrRequest.put("payment_amount", amountInPaise);
+			qrRequest.put("description", "Community Support Membership");
 
-	        JSONObject notes = new JSONObject(order.getNotes());
-	        qrRequest.put("notes", notes);
+			JSONObject notes = new JSONObject(order.getNotes());
+			qrRequest.put("notes", notes);
 
-	        com.razorpay.QrCode qrCode = client.qrCode.create(qrRequest);
+			com.razorpay.QrCode qrCode = client.qrCode.create(qrRequest);
 
-	        Map<String, Object> response = new HashMap<>();
-	        response.put("qrId", qrCode.get("id"));
-	        response.put("imageUrl", qrCode.get("image_url"));
-	        response.put("status", qrCode.get("status"));
+			Map<String, Object> response = new HashMap<>();
+			response.put("qrId", qrCode.get("id"));
+			response.put("imageUrl", qrCode.get("image_url"));
+			response.put("status", qrCode.get("status"));
 
-	        return new com.matrimony.model.entity.ResponseEntity(
-	                "QR generated successfully",
-	                200,
-	                response
-	        );
+			return new com.matrimony.model.entity.ResponseEntity("QR generated successfully", 200, response);
 
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        return new com.matrimony.model.entity.ResponseEntity(
-	                "QR generation failed",
-	                500,
-	                e.getMessage()
-	        );
-	    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new com.matrimony.model.entity.ResponseEntity("QR generation failed", 500, e.getMessage());
+		}
 	}
 //	@Override
 //	public ResponseEntity capturePayment(String razorpayOrderId, String razorpayPaymentId, String razorpaySignature,
@@ -328,6 +317,11 @@ public class PaymentServiceImpl implements PaymentService {
 				return new ResponseEntity("Invalid payment signature", 400, null);
 			}
 
+			RazorpayClient razorpayClient = new RazorpayClient(key, secret);
+			com.razorpay.Payment razorpayPayment = razorpayClient.payments.fetch(razorpayPaymentId);
+
+			String paymentMethod = razorpayPayment.get("method");
+
 			RazorpayOrder order = orderRepository.findByRazorpayOrderId(razorpayOrderId)
 					.orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -342,7 +336,7 @@ public class PaymentServiceImpl implements PaymentService {
 			payment.setOrder(order);
 			payment.setAmount(order.getAmount());
 			payment.setCurrency(order.getCurrency());
-			payment.setMethod(method);
+			payment.setMethod(paymentMethod);
 			payment.setStatus(PaymentStatus.CAPTURED);
 
 			paymentRepository.save(payment);
@@ -381,15 +375,9 @@ public class PaymentServiceImpl implements PaymentService {
 
 			subscriptionRepository.save(subscription);
 
-			
-			User user = order.getUser(); 
+			User user = order.getUser();
 
-			emailService.sendSubscriptionConfirmation(
-			        user.getId(),
-			        user.getEmail(),
-			        order.getPlan().getName()
-			);
-
+			emailService.sendSubscriptionConfirmation(user.getId(), user.getEmail(), order.getPlan().getName());
 
 			return new ResponseEntity("Payment verified & subscription updated successfully", 200, subscription);
 
