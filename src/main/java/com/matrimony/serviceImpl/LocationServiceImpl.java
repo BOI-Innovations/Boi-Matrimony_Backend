@@ -26,7 +26,7 @@ public class LocationServiceImpl implements LocationService {
 
 	@Autowired
 	private ProfileRepository profileRepository;
-	
+
 	@Autowired
 	private ProfileService profileService;
 
@@ -54,6 +54,36 @@ public class LocationServiceImpl implements LocationService {
 		}
 	}
 
+//	@Override
+//	public ResponseEntity createLocationForCurrentUser(LocationRequest request) {
+//		try {
+//			Long userId = getCurrentUserId();
+//			Profile profile = profileRepository.findByUserId(userId).orElse(null);
+//
+//			if (profile == null) {
+//				return new ResponseEntity("Profile not found", 404, null);
+//			}
+//
+//			if (profile.getLocation() != null) {
+//				return new ResponseEntity("Location already exists", 400, null);
+//			}
+//
+//			Location location = new Location();
+//			mapRequestToLocation(request, location);
+//			location.setProfile(profile);
+//			locationRepository.save(location);
+//
+//			profile.setLocation(location);
+//			profileRepository.save(profile);
+//			
+//			profileService.calculateProfileCompletion(profile.getId());
+//			return new ResponseEntity("Location created successfully", 201, convertToResponse(location));
+//
+//		} catch (Exception e) {
+//			return new ResponseEntity("Error creating location: " + e.getMessage(), 500, null);
+//		}
+//	}
+
 	@Override
 	public ResponseEntity createLocationForCurrentUser(LocationRequest request) {
 		try {
@@ -64,59 +94,65 @@ public class LocationServiceImpl implements LocationService {
 				return new ResponseEntity("Profile not found", 404, null);
 			}
 
-			if (profile.getLocation() != null) {
-				return new ResponseEntity("Location already exists", 400, null);
+			Location location = profile.getLocation();
+
+			if (location == null) {
+				location = new Location();
+				mapRequestToLocation(request, location);
+				location.setProfile(profile);
+				locationRepository.save(location);
+
+				profile.setLocation(location);
+				profileRepository.save(profile);
+
+				profileService.calculateProfileCompletion(profile.getId());
+				return new ResponseEntity("Location created successfully", 201, convertToResponse(location));
+			} else {
+				mapRequestToLocation(request, location);
+				locationRepository.save(location);
+
+				profileService.calculateProfileCompletion(profile.getId());
+				return new ResponseEntity("Location updated successfully", 200, convertToResponse(location));
 			}
 
-			Location location = new Location();
-			mapRequestToLocation(request, location);
-			location.setProfile(profile);
-			locationRepository.save(location);
-
-			profile.setLocation(location);
-			profileRepository.save(profile);
-			
-			profileService.calculateProfileCompletion(profile.getId());
-			return new ResponseEntity("Location created successfully", 201, convertToResponse(location));
-
 		} catch (Exception e) {
-			return new ResponseEntity("Error creating location: " + e.getMessage(), 500, null);
+			return new ResponseEntity("Error creating/updating location: " + e.getMessage(), 500, null);
 		}
 	}
 
 	@Override
 	public ResponseEntity updateLocationForCurrentUser(LocationRequest request) {
-	    try {
-	        Long userId = getCurrentUserId();
-	        Profile profile = profileRepository.findByUserId(userId).orElse(null);
+		try {
+			Long userId = getCurrentUserId();
+			Profile profile = profileRepository.findByUserId(userId).orElse(null);
 
-	        if (profile == null) {
-	            return new ResponseEntity("Profile not found", 404, null);
-	        }
+			if (profile == null) {
+				return new ResponseEntity("Profile not found", 404, null);
+			}
 
-	        Location location = profile.getLocation();
+			Location location = profile.getLocation();
 
-	        if (location == null) {
-	            location = new Location();
-	            mapRequestToLocation(request, location);
-	            location.setProfile(profile);
-	            locationRepository.save(location);
+			if (location == null) {
+				location = new Location();
+				mapRequestToLocation(request, location);
+				location.setProfile(profile);
+				locationRepository.save(location);
 
-	            profile.setLocation(location);
-	            profileRepository.save(profile);
-	            profileService.calculateProfileCompletion(profile.getId());
-	            return new ResponseEntity("Location created successfully", 201, convertToResponse(location));
-	        } else {
-	            mapRequestToLocation(request, location);
-	            locationRepository.save(location);
-	            profileService.calculateProfileCompletion(profile.getId());
+				profile.setLocation(location);
+				profileRepository.save(profile);
+				profileService.calculateProfileCompletion(profile.getId());
+				return new ResponseEntity("Location created successfully", 201, convertToResponse(location));
+			} else {
+				mapRequestToLocation(request, location);
+				locationRepository.save(location);
+				profileService.calculateProfileCompletion(profile.getId());
 
-	            return new ResponseEntity("Location updated successfully", 200, convertToResponse(location));
-	        }
+				return new ResponseEntity("Location updated successfully", 200, convertToResponse(location));
+			}
 
-	    } catch (Exception e) {
-	        return new ResponseEntity("Error processing location: " + e.getMessage(), 500, null);
-	    }
+		} catch (Exception e) {
+			return new ResponseEntity("Error processing location: " + e.getMessage(), 500, null);
+		}
 	}
 
 	@Override

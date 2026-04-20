@@ -9,6 +9,7 @@ public class HelpRequestResponse {
 	private int id;
 	private String name;
 	private String email;
+	private String phoneNumber;
 	private String subject;
 	private String message;
 	private HelpRequestStatus status;
@@ -68,6 +69,14 @@ public class HelpRequestResponse {
 
 	public void setStatus(HelpRequestStatus status) {
 		this.status = status;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
 	}
 
 }

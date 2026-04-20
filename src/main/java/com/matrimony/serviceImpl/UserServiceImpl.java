@@ -264,7 +264,7 @@ public class UserServiceImpl implements UserService {
 
 			int otp = random.nextInt(900000) + 100000;
 			String otpString = String.format("%06d", otp);
-//			System.out.println("OTP IS ------------>>" + otpString);
+			System.out.println("OTP IS ------------>>" + otpString);
 			otpStore.put(email, otpString);
 
 			String subject = "Your One-Time Password";
@@ -277,7 +277,7 @@ public class UserServiceImpl implements UserService {
 			}
 
 			String message = htmlContent.replace("{{OTP}}", otpString);
-			emailService.sendHtmlEmail(email, subject, message);
+			//emailService.sendHtmlEmail(email, subject, message);
 
 			return new ResponseEntity("OTP sent successfully.", 200, null);
 		} catch (Exception e) {
@@ -874,6 +874,7 @@ public class UserServiceImpl implements UserService {
 			helpRequest.setUser(user);
 			helpRequest.setName(request.getName());
 			helpRequest.setEmail(request.getEmail());
+			helpRequest.setPhoneNumber(request.getPhoneNumber());
 			helpRequest.setSubject(request.getSubject());
 			helpRequest.setMessage(request.getMessage());
 			helpRequest.setHelpRequestStatus(HelpRequestStatus.PENDING);
@@ -893,6 +894,7 @@ public class UserServiceImpl implements UserService {
 		response.setId(helpRequest.getId().intValue());
 		response.setName(helpRequest.getName());
 		response.setEmail(helpRequest.getEmail());
+		response.setPhoneNumber(helpRequest.getPhoneNumber());
 		response.setSubject(helpRequest.getSubject());
 		response.setMessage(helpRequest.getMessage());
 		response.setStatus(helpRequest.getHelpRequestStatus());

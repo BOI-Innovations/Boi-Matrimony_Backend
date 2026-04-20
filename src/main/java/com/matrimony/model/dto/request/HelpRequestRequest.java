@@ -6,6 +6,7 @@ public class HelpRequestRequest {
 	private String email;
 	private String subject;
 	private String message;
+	private String phoneNumber;
 
 	public String getName() {
 		return name;
@@ -37,6 +38,14 @@ public class HelpRequestRequest {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
 	}
 
 }

@@ -8,12 +8,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -64,6 +64,7 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 			helpRequest.setUser(user);
 			helpRequest.setName(request.getName());
 			helpRequest.setEmail(request.getEmail());
+			helpRequest.setPhoneNumber(request.getPhoneNumber());
 			helpRequest.setSubject(request.getSubject());
 			helpRequest.setMessage(request.getMessage());
 			helpRequest.setHelpRequestStatus(HelpRequestStatus.PENDING);
@@ -166,77 +167,72 @@ public class HelpRequestServiceImpl implements HelpRequestService {
 		return response;
 	}
 
+	public ResponseEntity getHelpRequests(String search, int page, int limit, LocalDate fromDate, LocalDate toDate) {
+		int pageIndex = page - 1;
+		Pageable pageable = PageRequest.of(pageIndex, limit);
 
-    public ResponseEntity getHelpRequests(String search, int page, int limit, 
-                                          LocalDate fromDate, LocalDate toDate) {
-        int pageIndex = page - 1;
-        Pageable pageable = PageRequest.of(pageIndex, limit);
+		// Convert LocalDate to LocalDateTime for database query
+		LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+		LocalDateTime toDateTime = toDate != null ? toDate.atTime(23, 59, 59) : null;
 
-        // Convert LocalDate to LocalDateTime for database query
-        LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
-        LocalDateTime toDateTime = toDate != null ? toDate.atTime(23, 59, 59) : null;
+		Page<HelpRequest> helpRequestPage;
 
-        Page<HelpRequest> helpRequestPage;
-        
-        // Apply date range filtering
-        if (fromDateTime != null || toDateTime != null) {
-            if (search != null && !search.trim().isEmpty()) {
-                helpRequestPage = helpRequestRepository.searchHelpRequestsWithDateRange(search, fromDateTime, toDateTime, pageable);
-            } else {
-                helpRequestPage = helpRequestRepository.findHelpRequestsByDateRange(fromDateTime, toDateTime, pageable);
-            }
-        } else {
-            if (search != null && !search.trim().isEmpty()) {
-                helpRequestPage = helpRequestRepository.searchHelpRequests(search, pageable);
-            } else {
-                helpRequestPage = helpRequestRepository.findAll(pageable);
-            }
-        }
+		// Apply date range filtering
+		if (fromDateTime != null || toDateTime != null) {
+			if (search != null && !search.trim().isEmpty()) {
+				helpRequestPage = helpRequestRepository.searchHelpRequestsWithDateRange(search, fromDateTime,
+						toDateTime, pageable);
+			} else {
+				helpRequestPage = helpRequestRepository.findHelpRequestsByDateRange(fromDateTime, toDateTime, pageable);
+			}
+		} else {
+			if (search != null && !search.trim().isEmpty()) {
+				helpRequestPage = helpRequestRepository.searchHelpRequests(search, pageable);
+			} else {
+				helpRequestPage = helpRequestRepository.findAll(pageable);
+			}
+		}
 
-        List<Map<String, Object>> helpRequestList = new ArrayList<>();
+		List<Map<String, Object>> helpRequestList = new ArrayList<>();
 
-        for (HelpRequest helpRequest : helpRequestPage.getContent()) {
-            Map<String, Object> requestMap = new LinkedHashMap<>();
-            
-            requestMap.put("id", helpRequest.getId());
-            requestMap.put("name", helpRequest.getName() != null ? helpRequest.getName() : "Not Provided");
-            requestMap.put("email", helpRequest.getEmail() != null ? helpRequest.getEmail() : "Not Provided");
-            requestMap.put("subject", helpRequest.getSubject() != null ? helpRequest.getSubject() : "Not Provided");
-            requestMap.put("message", helpRequest.getMessage() != null ? helpRequest.getMessage() : "Not Provided");
-            
-            requestMap.put("submitted",
-                    helpRequest.getCreatedAt() != null
-                            ? helpRequest.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                            : null);
-            
-            requestMap.put("status", helpRequest.getHelpRequestStatus() != null 
-                    ? helpRequest.getHelpRequestStatus().toString()
-                    : "PENDING");
-            
-            // Add user info if available
-            if (helpRequest.getUser() != null) {
-                Map<String, Object> userMap = new LinkedHashMap<>();
-                userMap.put("id", helpRequest.getUser().getId());
-                userMap.put("username", helpRequest.getUser().getUsername());
-                userMap.put("email", helpRequest.getUser().getEmail());
-                userMap.put("phoneNumber", helpRequest.getUser().getPhoneNumber());
-                requestMap.put("user", userMap);
-            } else {
-                requestMap.put("user", null);
-            }
+		for (HelpRequest helpRequest : helpRequestPage.getContent()) {
+			Map<String, Object> requestMap = new LinkedHashMap<>();
 
-            helpRequestList.add(requestMap);
-        }
+			requestMap.put("id", helpRequest.getId());
+			requestMap.put("name", helpRequest.getName() != null ? helpRequest.getName() : "Not Provided");
+			requestMap.put("email", helpRequest.getEmail() != null ? helpRequest.getEmail() : "Not Provided");
+			requestMap.put("subject", helpRequest.getSubject() != null ? helpRequest.getSubject() : "Not Provided");
+			requestMap.put("message", helpRequest.getMessage() != null ? helpRequest.getMessage() : "Not Provided");
 
-        Map<String, Object> responsePayload = new LinkedHashMap<>();
-        responsePayload.put("data", helpRequestList);
-        responsePayload.put("pagination", Map.of(
-                "currentPage", page,
-                "totalPages", helpRequestPage.getTotalPages(),
-                "totalItems", helpRequestPage.getTotalElements(),
-                "itemsPerPage", limit
-        ));
+			requestMap.put("submitted",
+					helpRequest.getCreatedAt() != null
+							? helpRequest.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+							: null);
 
-        return new ResponseEntity("Success", 200, responsePayload);
-    }
+			requestMap.put("status",
+					helpRequest.getHelpRequestStatus() != null ? helpRequest.getHelpRequestStatus().toString()
+							: "PENDING");
+
+			// Add user info if available
+			if (helpRequest.getUser() != null) {
+				Map<String, Object> userMap = new LinkedHashMap<>();
+				userMap.put("id", helpRequest.getUser().getId());
+				userMap.put("username", helpRequest.getUser().getUsername());
+				userMap.put("email", helpRequest.getUser().getEmail());
+				userMap.put("phoneNumber", helpRequest.getUser().getPhoneNumber());
+				requestMap.put("user", userMap);
+			} else {
+				requestMap.put("user", null);
+			}
+
+			helpRequestList.add(requestMap);
+		}
+
+		Map<String, Object> responsePayload = new LinkedHashMap<>();
+		responsePayload.put("data", helpRequestList);
+		responsePayload.put("pagination", Map.of("currentPage", page, "totalPages", helpRequestPage.getTotalPages(),
+				"totalItems", helpRequestPage.getTotalElements(), "itemsPerPage", limit));
+
+		return new ResponseEntity("Success", 200, responsePayload);
+	}
 }

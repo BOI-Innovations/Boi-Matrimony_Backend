@@ -33,6 +33,7 @@ public class HelpRequest {
 
 	private String name;
 	private String email;
+	private String phoneNumber;
 	private String subject;
 	private LocalDateTime createdAt;
 
@@ -40,7 +41,7 @@ public class HelpRequest {
 	private String message;
 
 	@Enumerated(EnumType.STRING)
-	private HelpRequestStatus status  = HelpRequestStatus.PENDING;
+	private HelpRequestStatus status = HelpRequestStatus.PENDING;
 
 	@PrePersist
 	public void onCreate() {
@@ -107,7 +108,6 @@ public class HelpRequest {
 		this.message = message;
 	}
 
-	
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -117,11 +117,27 @@ public class HelpRequest {
 	}
 
 	public HelpRequestStatus getHelpRequestStatus() {
-		return status ;
+		return status;
 	}
 
-	public void setHelpRequestStatus(HelpRequestStatus status ) {
-		this.status  = status ;
+	public void setHelpRequestStatus(HelpRequestStatus status) {
+		this.status = status;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public HelpRequestStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(HelpRequestStatus status) {
+		this.status = status;
 	}
 
 }
