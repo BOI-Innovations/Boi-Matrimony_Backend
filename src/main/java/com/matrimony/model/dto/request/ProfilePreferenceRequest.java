@@ -31,15 +31,11 @@ public class ProfilePreferenceRequest {
 	private Set<String> motherTongues;
     @NotNull
 	private Religion religion;
-	@NotNull
 	private Set<String> castes;
-	@NotNull
 	private Set<String> subCastes;
-    @NotNull
 	private Set<String> gothras;
 	private Set<String> stars;
 	private Set<String> rashis;
-    @NotNull
 	private Manglik manglik;
 	private EducationType educationType;
 	private Set<String> educationLevels;

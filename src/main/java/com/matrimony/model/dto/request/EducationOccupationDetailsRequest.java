@@ -2,13 +2,11 @@ package com.matrimony.model.dto.request;
 
 import com.matrimony.model.enums.EmploymentType;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class EducationOccupationDetailsRequest {
 
-	@NotBlank(message = "Highest education is required")
 	@Size(max = 100)
 	private String highestEducation;
 
@@ -21,7 +19,6 @@ public class EducationOccupationDetailsRequest {
 	@NotNull(message = "Employment type is required")
 	private EmploymentType employedIn;
 
-	@NotBlank(message = "Occupation is required")
 	private String occupation;
 
 	@Size(max = 200)
@@ -30,15 +27,14 @@ public class EducationOccupationDetailsRequest {
 	private String annualIncome;
 	private String incomeCurrency;
 
-	@NotBlank(message = "Work city is required")
 	private String workCity;
 
-	@NotBlank(message = "Work country is required")
 	private String workCountry;
 
-	@NotBlank(message = "Organization name is required")
 	@Size(max = 200)
 	private String organizationName;
+
+	// Getters and Setters
 
 	public String getHighestEducation() {
 		return highestEducation;

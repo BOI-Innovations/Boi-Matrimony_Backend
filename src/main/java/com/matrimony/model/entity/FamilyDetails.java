@@ -44,16 +44,13 @@ public class FamilyDetails {
 	@Column(nullable = false)
 	private FamilyStatus familyStatus;
 
-	@Column(nullable = false)
 	private String fatherOccupation;
 
-	@Column(nullable = false)
 	private String motherOccupation;
 
 	private String grandFatherOccupation;
 	private String grandMotherOccupation;
 
-	@Column(nullable = false)
 	private String nativePlace;
 
 	private Integer noOfBrothers;

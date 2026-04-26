@@ -64,6 +64,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -73,6 +74,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.matrimony.model.entity.ResponseEntity;
 
 @RestControllerAdvice
@@ -135,5 +137,20 @@ public class GlobalExceptionHandler {
 	public ResponseEntity handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
 		return new ResponseEntity("Invalid Content-Type. Please use application/json",
 				HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), null);
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+		String message = "Invalid request payload.";
+		Throwable cause = ex.getCause();
+		if (cause instanceof InvalidFormatException ife) {
+			Class<?> targetType = ife.getTargetType();
+			if (targetType.isEnum()) {
+				String fieldName = ife.getPath().isEmpty() ? "field" : ife.getPath().get(0).getFieldName();
+				message = "Invalid value for '" + fieldName + "'. Allowed values: " + String.join(", ",
+						Arrays.stream(targetType.getEnumConstants()).map(Object::toString).toArray(String[]::new));
+			}
+		}
+		return new ResponseEntity(message, 400, null);
 	}
 }

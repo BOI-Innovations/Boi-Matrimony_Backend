@@ -28,10 +28,8 @@ public class Location {
 	@NotNull(message = "Profile is required")
 	private Profile profile;
 
-	@NotNull(message = "City is required")
 	private String city;
 
-	@NotNull(message = "State is required")
 	private String state;
 
 	@NotNull(message = "Country is required")
@@ -39,7 +37,6 @@ public class Location {
 
 	private String postalCode;
 
-	@NotNull(message = "Citizenship is required")
 	private String citizenship;
 
 	@Enumerated(EnumType.STRING)

@@ -91,12 +91,10 @@ public class ProfileServiceImpl implements ProfileService {
 	@Override
 	public ResponseEntity getCurrentUserProfile() {
 		try {
-			String username = SecurityContextHolder.getContext().getAuthentication().getName();
 			Long userId = getCurrentUserId();
 			Profile profile = profileRepository.findByUserId(userId).orElse(null);
 			if (profile == null) {
-				return new ResponseEntity("Profile not found for user: " + username, HttpStatus.NOT_FOUND.value(),
-						null);
+				return new ResponseEntity("Profile not found", 404, null);
 			}
 			return new ResponseEntity("Profile fetched successfully", HttpStatus.OK.value(),
 					convertToResponse(profile));

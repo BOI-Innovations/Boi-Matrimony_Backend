@@ -75,17 +75,17 @@ public class ProfilePreference {
 
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "profile_preference_castes", joinColumns = @JoinColumn(name = "profile_pref_id"))
-	@Column(name = "caste", nullable = false)
+	@Column(name = "caste")
 	private Set<String> castes = new HashSet<>();
 
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "profile_preference_subcastes", joinColumns = @JoinColumn(name = "profile_pref_id"))
-	@Column(name = "sub_caste", nullable = false)
+	@Column(name = "sub_caste")
 	private Set<String> subCastes = new HashSet<>();
 
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "profile_preference_gothras", joinColumns = @JoinColumn(name = "profile_pref_id"))
-	@Column(name = "gothra", nullable = false)
+	@Column(name = "gothra")
 	private Set<String> gothras = new HashSet<>();
 
 	@ElementCollection(fetch = FetchType.LAZY)
@@ -99,7 +99,7 @@ public class ProfilePreference {
 	private Set<String> rashis = new HashSet<>();
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "manglik", nullable = false)
+	@Column(name = "manglik")
 	private Manglik manglik;
 
 	@Enumerated(EnumType.STRING)

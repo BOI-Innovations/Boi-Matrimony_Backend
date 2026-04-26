@@ -61,11 +61,8 @@ public class ProfileRequest {
 	@NotNull(message = "Marital status is required")
 	private MaritalStatus maritalStatus;
 
-	@NotNull(message = "Height is required")
 	private String heightIn;
 
-	@NotBlank(message = "Weight is required")
-	@Size(max = 10, message = "Weight must be at most 10 characters")
 	private String weight;
 
 	@NotNull(message = "Physical status is required")
@@ -77,7 +74,6 @@ public class ProfileRequest {
 	@Size(max = 1000, message = "Disease details must be at most 1000 characters")
 	private String diseaseDetails;
 
-	@NotBlank(message = "Mother tongue is required")
 	@Size(max = 50, message = "Mother tongue must be at most 50 characters")
 	private String motherTongue;
 
@@ -93,16 +89,18 @@ public class ProfileRequest {
 	@Size(max = 50, message = "Rashi must be at most 50 characters")
 	private String rashi;
 
-	@NotNull(message = "Manglik status is required")
 	private Manglik manglik;
 
 	@Size(max = 1000, message = "About section must be at most 1000 characters")
 	private String about;
 
+	@NotNull(message = "Dietary habits is required")
 	private DietaryHabits dietaryHabits;
 
+	@NotNull(message = "Drinking habits is required")
 	private DrinkingHabits drinkingHabits;
 
+	@NotNull(message = "Smoking habits is required")
 	private SmokingHabits smokingHabits;
 
 	@NotNull(message = "You must accept the declaration")

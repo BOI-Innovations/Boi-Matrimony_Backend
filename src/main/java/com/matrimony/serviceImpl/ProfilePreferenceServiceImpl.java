@@ -13,9 +13,8 @@ import com.matrimony.model.dto.response.ProfilePreferenceResponse;
 import com.matrimony.model.entity.Profile;
 import com.matrimony.model.entity.ProfilePreference;
 import com.matrimony.model.entity.ResponseEntity;
-import com.matrimony.model.entity.User;
 import com.matrimony.repository.ProfilePreferenceRepository;
-import com.matrimony.repository.UserRepository;
+import com.matrimony.repository.ProfileRepository;
 import com.matrimony.security.services.UserPrincipal;
 import com.matrimony.service.ProfilePreferenceService;
 import com.matrimony.service.ProfileService;
@@ -27,26 +26,15 @@ public class ProfilePreferenceServiceImpl implements ProfilePreferenceService {
 	private ProfilePreferenceRepository preferenceRepository;
 
 	@Autowired
-	private UserRepository userRepository;
+	private ProfileService profileService;
 
 	@Autowired
-	private ProfileService profileService;
+	private ProfileRepository profileRepository;
 
 	private Long getCurrentUserId() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 		return userPrincipal.getId();
-	}
-
-	private User getLoggedInUser() {
-		return userRepository.findById(getCurrentUserId()).orElseThrow(() -> new RuntimeException("User not found"));
-	}
-
-	private Profile getLoggedInProfile() {
-		Profile profile = getLoggedInUser().getProfile();
-		if (profile == null)
-			throw new RuntimeException("Profile not found");
-		return profile;
 	}
 
 	private ProfilePreferenceResponse mapToResponse(ProfilePreference pref) {
@@ -122,7 +110,12 @@ public class ProfilePreferenceServiceImpl implements ProfilePreferenceService {
 	@Transactional
 	public ResponseEntity createOrUpdatePreference(ProfilePreferenceRequest request) {
 		try {
-			Profile profile = getLoggedInProfile();
+			Long userId = getCurrentUserId();
+			Profile profile = profileRepository.findByUserId(userId).orElse(null);
+
+			if (profile == null) {
+				return new ResponseEntity("Profile not found", 404, null);
+			}
 
 			ProfilePreference pref = preferenceRepository.findByProfile(profile).orElse(new ProfilePreference());
 			pref.setProfile(profile);
@@ -140,7 +133,12 @@ public class ProfilePreferenceServiceImpl implements ProfilePreferenceService {
 	@Override
 	public ResponseEntity getPreferenceByLoggedInUser() {
 		try {
-			Profile profile = getLoggedInProfile();
+			Long userId = getCurrentUserId();
+			Profile profile = profileRepository.findByUserId(userId).orElse(null);
+
+			if (profile == null) {
+				return new ResponseEntity("Profile not found", 404, null);
+			}
 
 			return preferenceRepository.findByProfile(profile)
 					.map(pref -> new ResponseEntity("Preference found", 200, mapToResponse(pref)))
@@ -155,7 +153,12 @@ public class ProfilePreferenceServiceImpl implements ProfilePreferenceService {
 	@Transactional
 	public ResponseEntity deletePreference() {
 		try {
-			Profile profile = getLoggedInProfile();
+			Long userId = getCurrentUserId();
+			Profile profile = profileRepository.findByUserId(userId).orElse(null);
+
+			if (profile == null) {
+				return new ResponseEntity("Profile not found", 404, null);
+			}
 
 			return preferenceRepository.findByProfile(profile).map(pref -> {
 				preferenceRepository.delete(pref);

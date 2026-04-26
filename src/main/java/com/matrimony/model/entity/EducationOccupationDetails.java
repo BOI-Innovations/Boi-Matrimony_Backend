@@ -14,9 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "education_occupation_details")
@@ -29,15 +27,13 @@ public class EducationOccupationDetails {
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "profile_id", nullable = false)
 	@JsonIgnore
-	@NotNull(message = "Profile is required")
 	private Profile profile;
 
-	@NotBlank(message = "Highest education is required")
-	@Size(max = 100)
-	@Column(name = "highest_education", nullable = false)
+	@Column(name = "highest_education")
 	private String highestEducation;
 
 	private String additionalDegree;
+
 	private String collegeInstitution;
 
 	@Column(length = 1000)
@@ -48,30 +44,22 @@ public class EducationOccupationDetails {
 	@Column(name = "employed_in", nullable = false)
 	private EmploymentType employedIn;
 
-	@NotBlank(message = "Occupation is required")
-	@Column(nullable = false)
 	private String occupation;
 
-	@Size(max = 200)
 	private String occupationInDetail;
 
-	@NotBlank(message = "Organization name is required")
-	@Size(max = 200)
-	@Column(name = "organization_name", nullable = false)
+	@Column(name = "organization_name")
 	private String organizationName;
 
 	private String annualIncome;
+
 	private String incomeCurrency;
 
-	@NotBlank(message = "Work city is required")
-	@Column(name = "work_city", nullable = false)
+	@Column(name = "work_city")
 	private String workCity;
 
-	@NotBlank(message = "Work country is required")
-	@Column(name = "work_country", nullable = false)
+	@Column(name = "work_country")
 	private String workCountry;
-
-	// Getters and Setters
 
 	public Long getId() {
 		return id;

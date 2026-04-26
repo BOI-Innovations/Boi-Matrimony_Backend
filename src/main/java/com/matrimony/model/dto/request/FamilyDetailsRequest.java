@@ -4,7 +4,6 @@ import com.matrimony.model.enums.FamilyStatus;
 import com.matrimony.model.enums.FamilyType;
 import com.matrimony.model.enums.FamilyValue;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public class FamilyDetailsRequest {
@@ -18,16 +17,13 @@ public class FamilyDetailsRequest {
 	@NotNull(message = "Family status is required")
 	private FamilyStatus familyStatus;
 
-	@NotBlank(message = "Father occupation is required")
 	private String fatherOccupation;
 
-	@NotBlank(message = "Mother occupation is required")
 	private String motherOccupation;
 
 	private String grandFatherOccupation;
 	private String grandMotherOccupation;
 
-	@NotBlank(message = "Native place is required")
 	private String nativePlace;
 
 	private Integer noOfBrothers;

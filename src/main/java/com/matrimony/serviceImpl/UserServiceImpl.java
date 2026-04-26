@@ -73,9 +73,11 @@ public class UserServiceImpl implements UserService {
 	public ResponseEntity createUser(SignupRequest signUpRequest) {
 		try {
 			if (userRepository.existsByEmail(signUpRequest.getEmail().trim())) {
-				return new ResponseEntity("Email is already in use.", HttpStatus.BAD_REQUEST.value(), null);
+			    return new ResponseEntity("Email is already in use.", HttpStatus.BAD_REQUEST.value(), null);
 			} else if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-				return new ResponseEntity("Username is already in user.", HttpStatus.BAD_REQUEST.value(), null);
+			    return new ResponseEntity("Username is already in use.", HttpStatus.BAD_REQUEST.value(), null);
+			} else if (userRepository.existsByPhoneNumber(signUpRequest.getPhoneNumber().trim())) {
+			    return new ResponseEntity("Phone number is already in use.", HttpStatus.BAD_REQUEST.value(), null);
 			}
 
 			User user = new User();
@@ -111,12 +113,12 @@ public class UserServiceImpl implements UserService {
 			user.setVerificationToken(tokenGenerator.generateVerificationToken());
 
 			User savedUser = userRepository.save(user);
-			
+
 			try {
-	            sendWelcomeEmail(savedUser.getEmail());
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
+				sendWelcomeEmail(savedUser.getEmail());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 			UserResponse response = convertToUserResponse(savedUser);
 
@@ -277,7 +279,7 @@ public class UserServiceImpl implements UserService {
 			}
 
 			String message = htmlContent.replace("{{OTP}}", otpString);
-			//emailService.sendHtmlEmail(email, subject, message);
+			emailService.sendHtmlEmail(email, subject, message);
 
 			return new ResponseEntity("OTP sent successfully.", 200, null);
 		} catch (Exception e) {

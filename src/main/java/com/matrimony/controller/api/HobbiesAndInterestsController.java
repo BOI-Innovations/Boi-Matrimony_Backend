@@ -34,7 +34,6 @@ public class HobbiesAndInterestsController {
 	@PostMapping
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity createHobbiesAndInterests(@Valid @RequestBody HobbiesAndInterestsRequest request) {
-		System.out.println("Request is" + request.toString());
 		return hobbiesAndInterestsService.createHobbiesAndInterestsForCurrentUser(request);
 	}
 

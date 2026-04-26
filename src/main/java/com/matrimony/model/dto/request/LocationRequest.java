@@ -16,7 +16,6 @@ public class LocationRequest {
 
 	private String postalCode;
 
-	@NotBlank(message = "Citizenship is required")
 	private String citizenship;
 
 	@NotNull(message = "Residency status is required")

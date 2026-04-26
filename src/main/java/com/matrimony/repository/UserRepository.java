@@ -154,4 +154,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	    
 	    @Query("SELECT u FROM User u JOIN u.profile p")
 	    Page<User> findAllUsersWithProfile(Pageable pageable);
+
+		boolean existsByPhoneNumber(String trim);
 }

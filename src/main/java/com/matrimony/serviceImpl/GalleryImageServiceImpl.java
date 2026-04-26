@@ -69,9 +69,9 @@ public class GalleryImageServiceImpl implements GalleryImageService {
 
 			Optional<Profile> optionalProfile = profileRepository.findByUserId(user.getId());
 			if (optionalProfile.isEmpty()) {
-				return new ResponseEntity("Profile not found for user: " + username, 404, null);
+				return new ResponseEntity("Profile not found", 404, null);
 			}
-
+			
 			Profile profile = optionalProfile.get();
 
 			if (profilePicture == null || profilePicture.isEmpty()) {

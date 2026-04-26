@@ -85,10 +85,8 @@ public class Profile {
 	@Column(nullable = false)
 	private MaritalStatus maritalStatus;
 
-	@Column(nullable = false)
 	private String heightIn;
 
-	@Column(nullable = false)
 	private String weight;
 
 	@Enumerated(EnumType.STRING)
@@ -101,7 +99,6 @@ public class Profile {
 	@Column(name = "disease_details", length = 1000)
 	private String diseaseDetails;
 
-	@Column(nullable = false)
 	private String motherTongue;
 
 	@ElementCollection(fetch = FetchType.LAZY)
@@ -117,7 +114,6 @@ public class Profile {
 	private String rashi;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
 	private Manglik manglik;
 
 	@Column(length = 1000)
@@ -152,28 +148,27 @@ public class Profile {
 
 	// --- LAZY Relations ---
 
-	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private Location location;
 
-	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private EducationOccupationDetails educationOccupationDetails;
 
-	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private HobbiesAndInterests hobbiesAndInterests;
 
-	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY)
+	@OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JsonIgnore
 	private ProfilePreference preference;
 
-	@OneToMany(mappedBy = "profile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, // 🔴 REQUIRED
-			orphanRemoval = true)
+	@OneToMany(mappedBy = "profile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private List<GalleryImage> images = new ArrayList<>();
 
-	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY, orphanRemoval = true)
+	@OneToOne(mappedBy = "profile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private FamilyDetails familyDetails;
 

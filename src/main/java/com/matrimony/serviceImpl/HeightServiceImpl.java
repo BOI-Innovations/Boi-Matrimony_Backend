@@ -2,6 +2,7 @@ package com.matrimony.serviceImpl;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -79,11 +80,31 @@ public class HeightServiceImpl implements HeightService {
 	public ResponseEntity getAllHeights() {
 		try {
 			List<Height> list = heightRepository.findAll();
-			List<HeightResponse> responseList = list.stream().map(this::mapToResponse).toList();
+			List<HeightResponse> responseList = list.stream()
+				    .map(this::mapToResponse)
+				    .sorted(Comparator.comparingInt(h -> convertToInches(h.getHeight())))
+				    .toList();
 			return new ResponseEntity("All Heights fetched successfully", 200, responseList);
 		} catch (Exception e) {
 			return new ResponseEntity("Error fetching Heights: " + e.getMessage(), 500, null);
 		}
+	}
+	
+	private int convertToInches(String height) {
+	    int feet = 0;
+	    int inches = 0;
+
+	    String[] parts = height.split(" ");
+
+	    if (parts.length >= 2) {
+	        feet = Integer.parseInt(parts[0]);
+	    }
+
+	    if (parts.length >= 4) {
+	        inches = Integer.parseInt(parts[2]);
+	    }
+
+	    return feet * 12 + inches;
 	}
 
 	@Override
